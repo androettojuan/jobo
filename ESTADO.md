@@ -33,8 +33,9 @@ profesional y recálculo de contadores por la función en la nube.
 
 ## Hecho y verificado
 
-Probado de punta a punta contra los emuladores (registro → perfil profesional →
-solicitud → chat → estados → reseña → rating recalculado):
+El circuito completo (registro → perfil profesional → solicitud → chat →
+estados → reseña → rating recalculado) se probó contra los emuladores, y el
+tramo de registro, perfil y contadores también contra producción:
 
 - Auth con email y con Google; perfil de usuario editable (nombre, teléfono con
   visibilidad configurable, localidad, foto).
@@ -53,9 +54,10 @@ solicitud → chat → estados → reseña → rating recalculado):
 - Denuncias desde perfiles y reseñas.
 - Fotos en solicitudes, en el chat, en el perfil profesional y avatar, con
   compresión en el navegador antes de subir (máx. 1600px, 5 MB).
-- **32 tests de las reglas de Firestore** (`npm test`, con los emuladores
-  corriendo): transiciones de estado, acceso a chats y solicitudes ajenas,
-  agregados que el cliente no puede tocar, reseñas y moderación.
+- **39 tests** (`npm test`, con los emuladores corriendo): 33 de las reglas de
+  Firestore —transiciones de estado, acceso a chats y solicitudes ajenas,
+  agregados que el cliente no puede tocar, reseñas y moderación— y 6 del
+  filtro de búsqueda por texto.
 - Identidad visual de la marca original (verde `#09bc8a`), iconos de la PWA,
   favicon y aviso de instalación/actualización.
 - Buscador por texto (nombre, título, descripción y oficio), tolerante a
@@ -82,7 +84,6 @@ solicitud → chat → estados → reseña → rating recalculado):
 
 - Sincronizar también el nombre y la foto dentro de los chats ya abiertos:
   hoy quedan con el valor que tenían al crearse la conversación.
-
 - Historial de reseñas propias y "mis calificaciones" en el perfil.
 - Ordenar resultados por cercanía real, no solo por rating.
 - Ampliar el catálogo de localidades más allá de Calamuchita.

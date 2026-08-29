@@ -1,0 +1,163 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    /** Super admin: se otorga con un custom claim, no desde Firestore. */
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    /** Campos que solo pueden cambiar desde Cloud Functions (Admin SDK). */
+    function unchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(fields.toSet());
+    }
+
+    // --- Perfil base ------------------------------------------------------
+    match /users/{uid} {
+      // Perfil público reducido: cualquiera logueado puede leerlo para
+      // mostrar nombre y foto en chats y reseñas.
+      allow read: if signedIn();
+      allow create: if isSelf(uid);
+      allow update: if isAdmin() || (isSelf(uid) && unchanged(['disabled', 'createdAt']));
+      allow delete: if false;
+
+      match /notifications/{notificationId} {
+        allow read: if isSelf(uid);
+        // Solo el dueño puede marcarlas como leídas; crearlas es cosa del backend.
+        allow update: if isSelf(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow create, delete: if false;
+      }
+
+      match /favorites/{professionalId} {
+        allow read, write: if isSelf(uid);
+      }
+    }
+
+    // --- Perfiles profesionales -------------------------------------------
+    match /professionals/{uid} {
+      // El buscador es público: se puede leer sin estar logueado.
+      allow read: if true;
+      allow create: if isSelf(uid);
+      allow update: if isAdmin() || (isSelf(uid) && unchanged([
+        'ratingAvg', 'ratingCount', 'completedJobs', 'avgResponseMs', 'verified'
+      ]));
+      allow delete: if isAdmin() || isSelf(uid);
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      // Cualquiera puede proponer un oficio que no está en la lista, pero
+      // nace 'pending' y no aparece en la app hasta que un admin lo aprueba.
+      allow create: if signedIn()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.active == false
+        && request.resource.data.proposedBy == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 3
+        && request.resource.data.name.size() <= 40;
+      allow update, delete: if isAdmin();
+    }
+
+    // Contadores públicos (profesionales por categoría/localidad).
+    // Los escribe solo una Cloud Function.
+    match /stats/{statId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // --- Solicitudes de trabajo -------------------------------------------
+    match /requests/{requestId} {
+      function isParticipant() {
+        return signedIn() && request.auth.uid in resource.data.participantIds;
+      }
+
+      allow read: if isParticipant();
+      allow create: if signedIn()
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.participantIds ==
+             [request.auth.uid, request.resource.data.professionalId];
+      // El cambio de estado válido se valida en la Cloud Function; acá solo
+      // garantizamos que nadie ajeno toque la solicitud ni reescriba las partes.
+      allow update: if isParticipant()
+        && unchanged(['clientId', 'professionalId', 'participantIds', 'createdAt']);
+      allow delete: if false;
+    }
+
+    // --- Chats -------------------------------------------------------------
+    match /chats/{chatId} {
+      function isMember() {
+        return signedIn() && request.auth.uid in resource.data.participantIds;
+      }
+
+      allow read: if isMember();
+      allow create: if signedIn()
+        && request.auth.uid in request.resource.data.participantIds
+        && request.resource.data.participantIds.size() == 2;
+      allow update: if isMember() && unchanged(['participantIds', 'createdAt']);
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        function memberOfChat() {
+          return signedIn() && request.auth.uid in
+            get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
+        }
+
+        allow read: if memberOfChat();
+        allow create: if memberOfChat()
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.kind in ['text', 'image']
+          && request.resource.data.text.size() <= 2000;
+        // Solo se puede editar para marcar leído.
+        allow update: if memberOfChat()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']);
+        allow delete: if false;
+      }
+    }
+
+    // --- Reseñas -----------------------------------------------------------
+    match /reviews/{requestId} {
+      allow read: if true;
+
+      // Solo el cliente de una solicitud COMPLETADA puede reseñarla, una vez.
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && exists(/databases/$(database)/documents/requests/$(requestId))
+        && get(/databases/$(database)/documents/requests/$(requestId)).data.clientId == request.auth.uid
+        && get(/databases/$(database)/documents/requests/$(requestId)).data.status == 'completed';
+
+      // El autor edita su reseña; el profesional solo puede responderla.
+      allow update: if signedIn() && (
+        (request.auth.uid == resource.data.authorId
+          && unchanged(['professionalId', 'authorId', 'requestId', 'reply', 'hidden']))
+        || (request.auth.uid == resource.data.professionalId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reply']))
+      );
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == resource.data.authorId);
+    }
+
+    // --- Denuncias ---------------------------------------------------------
+    match /reports/{reportId} {
+      // Nadie ve las denuncias ajenas: solo el que denuncia y los admins.
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == resource.data.reporterId);
+      allow create: if signedIn()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.status == 'open'
+        && request.resource.data.targetType in ['user', 'professional', 'review', 'message'];
+      allow update, delete: if isAdmin();
+    }
+  }
+}

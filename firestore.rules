@@ -51,7 +51,7 @@ service cloud.firestore {
       allow create: if isSelf(uid);
       allow update: if isAdmin() || (isSelf(uid) && unchanged([
         'ratingAvg', 'ratingCount', 'completedJobs', 'avgResponseMs',
-        'answeredRequests', 'verified'
+        'answeredRequests', 'verified', 'publicPhone'
       ]));
       allow delete: if isAdmin() || isSelf(uid);
     }

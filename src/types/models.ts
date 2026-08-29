@@ -83,6 +83,12 @@ export interface Professional {
   hourlyRateFrom: number | null
   hourlyRateTo: number | null
   photos: string[]
+  /**
+   * Teléfono visible para cualquiera, solo si el usuario marcó
+   * `phoneIsPublic`. Lo sincroniza una Cloud Function desde `users/{uid}`:
+   * la ficha es pública y no puede leer el documento del usuario.
+   */
+  publicPhone: string | null
   status: ProfessionalStatus
   /** Verificación manual de identidad/matrícula. */
   verified: boolean

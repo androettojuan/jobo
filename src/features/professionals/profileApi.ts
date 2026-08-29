@@ -26,7 +26,7 @@ export async function getMyProfessional(uid: string) {
  */
 export async function saveProfessional(
   uid: string,
-  identity: { displayName: string; photoURL: string | null },
+  identity: { displayName: string; photoURL: string | null; publicPhone: string | null },
   draft: ProfessionalDraft,
 ) {
   const ref = doc(db, 'professionals', uid)
@@ -56,6 +56,7 @@ export async function saveProfessional(
   } else {
     await setDoc(ref, {
       ...base,
+      publicPhone: identity.publicPhone,
       verified: false,
       ratingAvg: 0,
       ratingCount: 0,

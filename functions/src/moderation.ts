@@ -60,3 +60,32 @@ export const onReportCreated = onDocumentCreated('reports/{reportId}', async (ev
     reason: report?.reason,
   })
 })
+
+/**
+ * Mantiene sincronizado el perfil profesional con el perfil base: nombre,
+ * foto y el teléfono (solo si la persona eligió mostrarlo). Sin esto, quien
+ * cambia su nombre queda con el viejo en las búsquedas, y la ficha pública
+ * no tendría forma de leer el teléfono, porque `users/{uid}` exige sesión.
+ */
+export const onUserProfileChanged = onDocumentUpdated('users/{uid}', async (event) => {
+  const before = event.data?.before
+  const after = event.data?.after
+  if (!before || !after) return
+
+  const changed =
+    before.get('displayName') !== after.get('displayName') ||
+    before.get('photoURL') !== after.get('photoURL') ||
+    before.get('phone') !== after.get('phone') ||
+    before.get('phoneIsPublic') !== after.get('phoneIsPublic')
+
+  if (!changed) return
+
+  const professional = db.doc(`professionals/${event.params.uid}`)
+  if (!(await professional.get()).exists) return
+
+  await professional.update({
+    displayName: after.get('displayName') ?? '',
+    photoURL: after.get('photoURL') ?? null,
+    publicPhone: after.get('phoneIsPublic') === true ? (after.get('phone') ?? null) : null,
+  })
+})

@@ -8,4 +8,9 @@ export { onReviewWritten } from './reviews.js'
 export { onMessageCreated, markChatRead } from './chat.js'
 export { onRequestCreated, onRequestUpdated } from './requests.js'
 export { onProfessionalWritten, refreshStatsDaily } from './stats.js'
-export { onCategoryUpdated, onUserDisabledChanged, onReportCreated } from './moderation.js'
+export {
+  onCategoryUpdated,
+  onUserDisabledChanged,
+  onUserProfileChanged,
+  onReportCreated,
+} from './moderation.js'

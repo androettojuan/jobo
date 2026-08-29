@@ -128,7 +128,11 @@ export function ProfessionalEditPage() {
     try {
       await saveProfessional(
         firebaseUser.uid,
-        { displayName: profile.displayName, photoURL: profile.photoURL },
+        {
+          displayName: profile.displayName,
+          photoURL: profile.photoURL,
+          publicPhone: profile.phoneIsPublic ? profile.phone : null,
+        },
         draft,
       )
       setSaved(true)

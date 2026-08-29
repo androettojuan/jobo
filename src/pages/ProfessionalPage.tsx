@@ -1,4 +1,4 @@
-import { ArrowLeft, BadgeCheck, MapPin, MessageSquare, UserX } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, MapPin, MessageSquare, Phone, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
@@ -120,6 +120,16 @@ export function ProfessionalPage() {
         )}
 
         {rate && <p className="text-sm text-slate-500">{rate} por hora</p>}
+
+        {professional.publicPhone && (
+          <a
+            href={`tel:${professional.publicPhone}`}
+            className="flex items-center gap-1 text-sm font-medium text-brand-600"
+          >
+            <Phone className="size-4" aria-hidden />
+            {professional.publicPhone}
+          </a>
+        )}
 
         <div className="flex flex-wrap justify-center gap-2">
           {professional.categoryIds.map((id) => (

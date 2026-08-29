@@ -354,3 +354,14 @@ describe('perfil de usuario', () => {
 it('las reglas de prueba se cargaron', () => {
   expect(env).toBeDefined()
 })
+
+describe('teléfono público', () => {
+  it('el profesional no puede escribir su propio publicPhone', async () => {
+    await seed((db) => setDoc(doc(db, 'professionals/profesional-1'), professionalDoc()))
+    const db = env.authenticatedContext(PRO).firestore()
+    // Lo sincroniza la Cloud Function desde users/{uid}, según phoneIsPublic.
+    await assertFails(
+      updateDoc(doc(db, 'professionals/profesional-1'), { publicPhone: '3546551234' }),
+    )
+  })
+})

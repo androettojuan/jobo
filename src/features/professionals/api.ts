@@ -43,6 +43,35 @@ export async function searchProfessionals({
   return list
 }
 
+/**
+ * Filtra por texto sobre los resultados ya traídos. Firestore no hace
+ * búsqueda de texto y para el volumen de un pueblo no vale la pena montar
+ * Algolia: alcanza con mirar nombre, título, descripción y oficios.
+ */
+export function filterByText(list: Professional[], term: string) {
+  const value = term.trim().toLowerCase()
+  if (!value) return list
+
+  const words = value.split(/\s+/)
+
+  return list.filter((professional) => {
+    const haystack = [
+      professional.displayName,
+      professional.headline,
+      professional.description,
+      ...professional.categoryIds,
+    ]
+      .join(' ')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+
+    return words.every((word) =>
+      haystack.includes(word.normalize('NFD').replace(/[\u0300-\u036f]/g, '')),
+    )
+  })
+}
+
 export async function getProfessional(uid: string) {
   const snap = await getDoc(doc(db, 'professionals', uid))
   return snap.exists() ? (snap.data() as Professional) : null

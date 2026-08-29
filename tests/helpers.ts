@@ -1,7 +1,4 @@
-import {
-  initializeTestEnvironment,
-  type RulesTestEnvironment,
-} from '@firebase/rules-unit-testing'
+import { initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing'
 import { readFileSync } from 'node:fs'
 
 export const CLIENT = 'cliente-1'

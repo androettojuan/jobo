@@ -1,11 +1,11 @@
-import { SearchX } from 'lucide-react'
+import { Search, SearchX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { EmptyState } from '@/components/EmptyState'
 import { Spinner } from '@/components/ui/Spinner'
 import { ProfessionalCard } from '@/features/professionals/components/ProfessionalCard'
-import { searchProfessionals } from '@/features/professionals/api'
+import { filterByText, searchProfessionals } from '@/features/professionals/api'
 import { LocalityPicker } from '@/features/localities/LocalityPicker'
 import { useLocalityStore } from '@/features/localities/store'
 import { CATEGORIES } from '@/lib/categories'
@@ -17,6 +17,7 @@ export function SearchPage() {
   const categoryId = params.get('categoria') ?? ''
   const locality = useLocalityStore((s) => s.locality)
   const [results, setResults] = useState<Professional[]>([])
+  const [term, setTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -44,11 +45,28 @@ export function SearchPage() {
     }
   }, [categoryId, locality?.id])
 
+  const visible = filterByText(results, term)
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <h1 className="text-2xl font-bold">Buscar</h1>
 
       <LocalityPicker />
+
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-slate-400"
+          aria-hidden
+        />
+        <input
+          type="search"
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          placeholder="¿Qué necesitás resolver?"
+          aria-label="Buscar profesionales"
+          className="h-12 w-full rounded-xl border border-slate-300 pr-4 pl-11 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
+        />
+      </div>
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {CATEGORIES.map((category) => {
@@ -73,20 +91,22 @@ export function SearchPage() {
       {loading && <Spinner />}
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {!loading && !error && results.length === 0 && (
+      {!loading && !error && visible.length === 0 && (
         <EmptyState
           icon={SearchX}
-          title="Todavía no hay profesionales"
+          title={term ? 'Sin resultados' : 'Todavía no hay profesionales'}
           description={
-            locality
-              ? `Todavía nadie ofrece este servicio en ${locality.name}. Probá sacando el filtro de localidad.`
-              : 'Cuando haya profesionales en esta categoría los vas a ver acá.'
+            term
+              ? `Nadie coincide con “${term}”. Probá con otras palabras.`
+              : locality
+                ? `Todavía nadie ofrece este servicio en ${locality.name}. Probá sacando el filtro de localidad.`
+                : 'Cuando haya profesionales en esta categoría los vas a ver acá.'
           }
         />
       )}
 
       <ul className="flex flex-col gap-3">
-        {results.map((professional) => (
+        {visible.map((professional) => (
           <li key={professional.uid}>
             <ProfessionalCard professional={professional} />
           </li>

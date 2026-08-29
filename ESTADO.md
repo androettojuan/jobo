@@ -61,18 +61,13 @@ solicitud → chat → estados → reseña → rating recalculado):
 
 Por orden sugerido:
 
-1. **Habilitar Email/Contraseña en la consola de Firebase.**
-   Authentication → Sign-in method. Hoy está deshabilitado: el registro con
-   email falla con `OPERATION_NOT_ALLOWED` (Google sí anda).
-2. **Hacerte admin.** Bajar la clave de servicio y correr
-   `GOOGLE_APPLICATION_CREDENTIALS=./service-account.json node scripts/set-admin.mjs juan.androetto36@gmail.com`.
-   Después cerrar y volver a abrir sesión.
-3. **Cargar el catálogo en Firestore**: `npm run seed` (mismas credenciales).
-4. **Desplegar las Cloud Functions**: `cd functions && npm run deploy`.
-   Requiere plan Blaze. Sin esto no hay ratings agregados, contadores ni push.
-5. **Clave VAPID** para push web: Firebase Console → Cloud Messaging →
+1. **Hacerte admin**: `npm run admin juan.androetto36@gmail.com`, después de
+   haber iniciado sesión una vez con esa cuenta. Cerrar y volver a abrir sesión.
+2. **Cargar el catálogo en Firestore**: `npm run seed`.
+3. **Desplegar las Cloud Functions**: `firebase deploy --only functions`.
+4. **Clave VAPID** para push web: Firebase Console → Cloud Messaging →
    certificados push web → completar `VITE_FIREBASE_VAPID_KEY` en `.env.local`.
-6. **Deploy del front**: `npm run build && firebase deploy --only hosting`.
+5. **Deploy del front**: `npm run build && firebase deploy --only hosting`.
 
 ### Mejoras que valen la pena después
 

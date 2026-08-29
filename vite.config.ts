@@ -7,6 +7,15 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    watch: {
+      // En WSL2 el watcher nativo no ve los cambios hechos sobre el sistema de
+      // archivos de Linux desde otras herramientas, y el HMR sirve código
+      // viejo sin avisar. El sondeo es más caro pero confiable.
+      usePolling: process.env.VITE_POLL !== 'false',
+      interval: 300,
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

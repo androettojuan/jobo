@@ -79,9 +79,7 @@ describe('solicitudes', () => {
 
   it('no se puede crear una solicitud a nombre de otro', async () => {
     const db = env.authenticatedContext(STRANGER).firestore()
-    await assertFails(
-      setDoc(doc(db, 'requests/req-2'), requestDoc({ chatId: 'chat-2' })),
-    )
+    await assertFails(setDoc(doc(db, 'requests/req-2'), requestDoc({ chatId: 'chat-2' })))
   })
 })
 

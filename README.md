@@ -55,12 +55,16 @@ Scripts:
 ### Hacerte super admin
 
 ```bash
-GOOGLE_APPLICATION_CREDENTIALS=./service-account.json \
-  node scripts/set-admin.mjs juan.androetto36@gmail.com
+npm run admin juan.androetto36@gmail.com
 ```
 
+Usa las credenciales que ya dejó `firebase login` (o
+`gcloud auth application-default login`); también acepta un
+`GOOGLE_APPLICATION_CREDENTIALS` si preferís una clave de servicio.
+
+La cuenta tiene que existir: iniciá sesión una vez en la app antes de correrlo.
 Después hay que cerrar y volver a abrir sesión para que el token traiga el
-claim. El panel queda en `/admin`.
+permiso. El panel queda en `/admin`.
 
 ## Estructura
 

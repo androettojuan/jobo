@@ -14,7 +14,8 @@
     "format": "prettier --write src",
     "seed": "node scripts/seed.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "admin": "node scripts/set-admin.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

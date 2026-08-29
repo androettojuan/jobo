@@ -9,6 +9,20 @@ export const onRequestCreated = onDocumentCreated('requests/{requestId}', async 
 
   const client = await db.doc(`users/${request.clientId}`).get()
 
+  // El pedido abre la conversación como mensaje de sistema: así el chat no
+  // arranca vacío y no dispara una segunda notificación de "mensaje nuevo".
+  if (request.chatId) {
+    await db.collection(`chats/${request.chatId}/messages`).add({
+      chatId: request.chatId,
+      senderId: request.clientId,
+      kind: 'system',
+      text: `${request.title}\n\n${request.description}`,
+      imageUrl: null,
+      readBy: [request.clientId],
+      createdAt: FieldValue.serverTimestamp(),
+    })
+  }
+
   await notify({
     uid: request.professionalId,
     type: 'request_received',

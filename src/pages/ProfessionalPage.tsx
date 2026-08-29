@@ -105,7 +105,9 @@ export function ProfessionalPage() {
           <StarRating value={Math.round(professional.ratingAvg)} />
           <span className="text-slate-500">
             {professional.ratingCount > 0
-              ? `${professional.ratingAvg.toFixed(1)} · ${professional.ratingCount} reseñas`
+              ? `${professional.ratingAvg.toFixed(1)} · ${professional.ratingCount} ${
+                  professional.ratingCount === 1 ? 'reseña' : 'reseñas'
+                }`
               : 'Sin calificaciones aún'}
           </span>
         </div>

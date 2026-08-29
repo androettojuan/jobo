@@ -68,17 +68,9 @@ export async function createRequest(client: User, professional: Professional, in
     updatedAt: serverTimestamp(),
   })
 
-  // Primer mensaje del chat: el pedido en sí, para no arrancar en blanco.
-  batch.set(doc(collection(db, 'chats', chatRef.id, 'messages')), {
-    chatId: chatRef.id,
-    senderId: client.uid,
-    kind: 'text',
-    text: `${input.title}\n\n${input.description}`,
-    imageUrl: null,
-    readBy: [client.uid],
-    createdAt: serverTimestamp(),
-  })
-
+  // El primer mensaje (el pedido en sí) lo escribe `onRequestCreated`: dentro
+  // de un batch las reglas todavía no ven el chat recién creado, así que un
+  // mensaje escrito acá sería rechazado.
   await batch.commit()
   return requestRef.id
 }

@@ -79,10 +79,15 @@ export function ProfessionalEditPage() {
   }
 
   function toggle(key: 'categoryIds' | 'serviceAreaIds', id: string) {
-    const current = draft[key]
-    patch({
-      [key]: current.includes(id) ? current.filter((v) => v !== id) : [...current, id],
+    // Forma funcional: dos toggles seguidos no se pisan entre sí.
+    setDraft((prev) => {
+      const current = prev[key]
+      return {
+        ...prev,
+        [key]: current.includes(id) ? current.filter((v) => v !== id) : [...current, id],
+      }
     })
+    setSaved(false)
   }
 
   async function addProposedCategory() {
@@ -90,7 +95,7 @@ export function ProfessionalEditPage() {
     try {
       const id = await proposeCategory(firebaseUser.uid, newCategory)
       setProposed((prev) => [...prev, { id, name: newCategory.trim() }])
-      patch({ categoryIds: [...draft.categoryIds, id] })
+      setDraft((prev) => ({ ...prev, categoryIds: [...prev.categoryIds, id] }))
       setNewCategory('')
     } catch {
       setError('No pudimos registrar ese oficio. Probá con otro nombre.')
@@ -101,7 +106,7 @@ export function ProfessionalEditPage() {
     if (!firebaseUser) return
     try {
       const url = await uploadWorkPhoto(firebaseUser.uid, file)
-      patch({ photos: [...draft.photos, url] })
+      setDraft((prev) => ({ ...prev, photos: [...prev.photos, url] }))
     } catch {
       setError('No pudimos subir la foto. Probá con una más liviana.')
     }
@@ -279,7 +284,12 @@ export function ProfessionalEditPage() {
               <button
                 type="button"
                 aria-label="Quitar foto"
-                onClick={() => patch({ photos: draft.photos.filter((p) => p !== url) })}
+                onClick={() =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    photos: prev.photos.filter((photo) => photo !== url),
+                  }))
+                }
                 className="absolute -top-1.5 -right-1.5 grid size-6 place-items-center rounded-full bg-slate-900 text-white"
               >
                 <X className="size-3.5" aria-hidden />

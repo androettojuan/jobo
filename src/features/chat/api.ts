@@ -11,9 +11,9 @@ import {
   where,
 } from 'firebase/firestore'
 
-import { getFunctions, httpsCallable } from 'firebase/functions'
+import { httpsCallable } from 'firebase/functions'
 
-import { app, db } from '@/lib/firebase'
+import { db, functions } from '@/lib/firebase'
 import type { Chat, Message } from '@/types/models'
 
 /** Suscripción en vivo a la lista de chats del usuario. */
@@ -49,10 +49,7 @@ export function subscribeToMessages(chatId: string, onChange: (messages: Message
  * porque `unreadCount` no es escribible desde el cliente.
  */
 export async function markChatRead(chatId: string) {
-  const callable = httpsCallable<{ chatId: string }, { ok: boolean }>(
-    getFunctions(app),
-    'markChatRead',
-  )
+  const callable = httpsCallable<{ chatId: string }, { ok: boolean }>(functions, 'markChatRead')
   await callable({ chatId })
 }
 

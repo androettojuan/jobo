@@ -121,7 +121,9 @@ export function RequestDetailPage() {
           </a>
         ) : (
           <p className="text-xs text-slate-500">
-            El teléfono se comparte cuando el profesional acepta la solicitud.
+            {['accepted', 'in_progress', 'completed'].includes(request.status)
+              ? 'La otra persona todavía no cargó su teléfono. Podés coordinar por chat.'
+              : 'El teléfono se comparte cuando el profesional acepta la solicitud.'}
           </p>
         )}
 

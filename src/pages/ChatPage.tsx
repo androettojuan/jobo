@@ -97,6 +97,19 @@ export function ChatPage() {
       <ul className="flex flex-1 flex-col gap-2 overflow-y-auto p-4">
         {messages.map((message) => {
           const mine = message.senderId === firebaseUser?.uid
+
+          // El pedido inicial se muestra como tarjeta de contexto, no como burbuja.
+          if (message.kind === 'system') {
+            return (
+              <li
+                key={message.id}
+                className="self-center rounded-2xl border border-slate-200 px-3 py-2 text-center text-xs whitespace-pre-line text-slate-500 dark:border-slate-800"
+              >
+                {message.text}
+              </li>
+            )
+          }
+
           return (
             <li
               key={message.id}

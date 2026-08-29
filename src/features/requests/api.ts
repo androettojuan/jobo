@@ -1,11 +1,4 @@
-import {
-  collection,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from 'firebase/firestore'
+import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore'
 
 import { db } from '@/lib/firebase'
 import type { JobRequest, RequestStatus } from '@/types/models'

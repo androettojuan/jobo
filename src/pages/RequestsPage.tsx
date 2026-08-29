@@ -42,30 +42,26 @@ export function RequestsPage() {
       ) : (
         <ul className="flex flex-col gap-3">
           {requests.map((request) => (
-            <li
-              key={request.id}
-              className="rounded-2xl border border-slate-200 p-3 dark:border-slate-800"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{request.title}</p>
-                  <p className="text-sm text-slate-500">
-                    {CATEGORIES_BY_ID.get(request.categoryId)?.name ?? request.categoryId}
-                    {request.clientId === firebaseUser?.uid ? ' · la pediste vos' : ' · te la pidieron'}
-                  </p>
+            <li key={request.id}>
+              <Link
+                to={`/solicitudes/${request.id}`}
+                className="block rounded-2xl border border-slate-200 p-3 dark:border-slate-800"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{request.title}</p>
+                    <p className="text-sm text-slate-500">
+                      {CATEGORIES_BY_ID.get(request.categoryId)?.name ?? request.categoryId}
+                      {request.clientId === firebaseUser?.uid
+                        ? ' · la pediste vos'
+                        : ' · te la pidieron'}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs dark:bg-slate-800">
+                    {REQUEST_STATUS_LABELS[request.status]}
+                  </span>
                 </div>
-                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs dark:bg-slate-800">
-                  {REQUEST_STATUS_LABELS[request.status]}
-                </span>
-              </div>
-              {request.chatId && (
-                <Link
-                  to={`/chats/${request.chatId}`}
-                  className="mt-2 inline-block text-sm font-medium text-brand-600 hover:underline"
-                >
-                  Abrir chat
-                </Link>
-              )}
+              </Link>
             </li>
           ))}
         </ul>

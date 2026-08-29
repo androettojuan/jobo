@@ -1,13 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  where,
-} from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore'
 
 import { db } from '@/lib/firebase'
 import type { Professional, Review } from '@/types/models'
@@ -25,7 +16,11 @@ interface SearchOptions {
  * filtra por ambas cosas la categoría va a la consulta y la localidad se
  * filtra en memoria (el volumen por pueblo es chico).
  */
-export async function searchProfessionals({ categoryId, localityId, max = 30 }: SearchOptions = {}) {
+export async function searchProfessionals({
+  categoryId,
+  localityId,
+  max = 30,
+}: SearchOptions = {}) {
   const arrayFilter = categoryId
     ? where('categoryIds', 'array-contains', categoryId)
     : localityId

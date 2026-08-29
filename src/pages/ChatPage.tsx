@@ -3,14 +3,21 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
-import { sendMessage, subscribeToMessages } from '@/features/chat/api'
+import {
+  markChatRead,
+  sendMessage,
+  subscribeToChat,
+  subscribeToMessages,
+} from '@/features/chat/api'
+import { CATEGORIES_BY_ID } from '@/lib/categories'
 import { useAuth } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
-import type { Message } from '@/types/models'
+import type { Chat, Message } from '@/types/models'
 
 export function ChatPage() {
   const { chatId } = useParams<{ chatId: string }>()
   const { firebaseUser } = useAuth()
+  const [chat, setChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -22,8 +29,20 @@ export function ChatPage() {
   }, [chatId])
 
   useEffect(() => {
+    if (!chatId) return
+    return subscribeToChat(chatId, setChat)
+  }, [chatId])
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length])
+
+  // Al abrir el chat y con cada mensaje nuevo mientras está abierto, lo damos
+  // por leído. Si falla no rompemos nada: solo queda el contador en rojo.
+  useEffect(() => {
+    if (!chatId || messages.length === 0) return
+    void markChatRead(chatId).catch(() => {})
+  }, [chatId, messages.length])
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -41,13 +60,38 @@ export function ChatPage() {
     }
   }
 
+  const otherId = chat?.participantIds.find((id) => id !== firebaseUser?.uid)
+  const otherName = otherId
+    ? (chat?.participants[otherId]?.displayName ?? 'Conversación')
+    : 'Conversación'
+  const category = chat?.categoryId ? CATEGORIES_BY_ID.get(chat.categoryId) : undefined
+
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center gap-2 border-b border-slate-200 p-3 dark:border-slate-800">
+      <header className="safe-top flex items-center gap-3 border-b border-slate-200 p-3 dark:border-slate-800">
         <Link to="/chats" aria-label="Volver a chats">
           <ArrowLeft className="size-5" />
         </Link>
-        <span className="font-medium">Conversación</span>
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium">{otherName}</p>
+          {(category || chat?.requestTitle) && (
+            <p className="truncate text-xs text-slate-500">
+              {category && <span className="font-medium text-brand-600">{category.name}</span>}
+              {category && chat?.requestTitle && ' · '}
+              {chat?.requestTitle}
+            </p>
+          )}
+        </div>
+
+        {chat?.requestId && (
+          <Link
+            to={`/solicitudes/${chat.requestId}`}
+            className="shrink-0 rounded-full border border-slate-300 px-3 py-1 text-xs dark:border-slate-700"
+          >
+            Ver solicitud
+          </Link>
+        )}
       </header>
 
       <ul className="flex flex-1 flex-col gap-2 overflow-y-auto p-4">
@@ -56,9 +100,12 @@ export function ChatPage() {
           return (
             <li
               key={message.id}
-              className={cn('max-w-[80%] rounded-2xl px-3 py-2 text-sm', mine
-                ? 'self-end bg-brand-600 text-white'
-                : 'self-start bg-slate-100 dark:bg-slate-800')}
+              className={cn(
+                'max-w-[80%] rounded-2xl px-3 py-2 text-sm',
+                mine
+                  ? 'self-end bg-brand-600 text-white'
+                  : 'self-start bg-slate-100 dark:bg-slate-800',
+              )}
             >
               {message.text}
             </li>
@@ -67,7 +114,10 @@ export function ChatPage() {
         <div ref={bottomRef} />
       </ul>
 
-      <form onSubmit={onSubmit} className="safe-bottom flex gap-2 border-t border-slate-200 p-3 dark:border-slate-800">
+      <form
+        onSubmit={onSubmit}
+        className="safe-bottom flex gap-2 border-t border-slate-200 p-3 dark:border-slate-800"
+      >
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}

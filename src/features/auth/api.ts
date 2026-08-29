@@ -11,7 +11,10 @@ import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 
 /** Crea users/{uid} si todavía no existe. Idempotente. */
-async function ensureProfile(uid: string, data: { displayName: string; email: string; photoURL: string | null }) {
+async function ensureProfile(
+  uid: string,
+  data: { displayName: string; email: string; photoURL: string | null },
+) {
   const ref = doc(db, 'users', uid)
   const snap = await getDoc(ref)
   if (snap.exists()) return
@@ -84,6 +87,12 @@ export function authErrorMessage(error: unknown): string {
       return 'Cerraste la ventana de Google antes de terminar.'
     case 'auth/network-request-failed':
       return 'No hay conexión. Revisá tu internet.'
+    case 'auth/operation-not-allowed':
+      return 'El registro con email está deshabilitado. Probá con Google.'
+    case 'auth/too-many-requests':
+      return 'Demasiados intentos. Esperá un momento y probá de nuevo.'
+    case 'auth/user-disabled':
+      return 'Tu cuenta fue suspendida. Escribinos si creés que es un error.'
     default:
       return 'Algo salió mal. Probá de nuevo.'
   }

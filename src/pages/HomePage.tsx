@@ -72,7 +72,11 @@ export function HomePage() {
                       <span className="text-xs leading-tight font-medium">{category.name}</span>
                       {!empty && (
                         <span className="text-[10px] text-slate-500">
-                          {count === 0 ? 'sin nadie aún' : count === 1 ? '1 disponible' : `${count} disponibles`}
+                          {count === 0
+                            ? 'sin nadie aún'
+                            : count === 1
+                              ? '1 disponible'
+                              : `${count} disponibles`}
                         </span>
                       )}
                     </Link>

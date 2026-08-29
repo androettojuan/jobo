@@ -1,20 +1,13 @@
 import type { Locality, LocalityRef } from '@/types/models'
 
+import localitiesData from './data/localities.json'
+
 /**
  * Catálogo de localidades. Arrancamos por el Valle de Calamuchita y se va
  * ampliando: agregar una localidad acá (y correr el seed) alcanza para que
  * aparezca en los filtros.
  */
-export const LOCALITIES: Locality[] = [
-  { id: 'villa-rumipal', name: 'Villa Rumipal', province: 'Córdoba', lat: -32.1889, lng: -64.4767 },
-  { id: 'embalse', name: 'Embalse', province: 'Córdoba', lat: -32.2069, lng: -64.4036 },
-  { id: 'villa-del-dique', name: 'Villa del Dique', province: 'Córdoba', lat: -32.1806, lng: -64.4531 },
-  { id: 'santa-rosa-de-calamuchita', name: 'Santa Rosa de Calamuchita', province: 'Córdoba', lat: -32.0672, lng: -64.5386 },
-  { id: 'villa-general-belgrano', name: 'Villa General Belgrano', province: 'Córdoba', lat: -31.9781, lng: -64.5556 },
-  { id: 'los-reartes', name: 'Los Reartes', province: 'Córdoba', lat: -31.9036, lng: -64.5722 },
-  { id: 'la-cruz', name: 'La Cruz', province: 'Córdoba', lat: -32.1156, lng: -64.4869 },
-  { id: 'san-agustin', name: 'San Agustín', province: 'Córdoba', lat: -31.9333, lng: -64.3667 },
-]
+export const LOCALITIES = localitiesData as Locality[]
 
 export const LOCALITIES_BY_ID = new Map(LOCALITIES.map((l) => [l.id, l]))
 

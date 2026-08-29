@@ -1,15 +1,25 @@
 import { createBrowserRouter } from 'react-router-dom'
 
-import { AdminPage } from '@/pages/admin/AdminPage'
+import { AdminCategoriesPage } from '@/pages/admin/AdminCategoriesPage'
+import { AdminLayout } from '@/pages/admin/AdminLayout'
+import { AdminProfessionalsPage } from '@/pages/admin/AdminProfessionalsPage'
+import { AdminReportsPage } from '@/pages/admin/AdminReportsPage'
+import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
 import { ChatPage } from '@/pages/ChatPage'
 import { ChatsPage } from '@/pages/ChatsPage'
 import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotificationsPage } from '@/pages/NotificationsPage'
+import { NewRequestPage } from '@/pages/NewRequestPage'
+import { ProfessionalDashboardPage } from '@/pages/ProfessionalDashboardPage'
+import { ProfessionalEditPage } from '@/pages/ProfessionalEditPage'
 import { ProfessionalPage } from '@/pages/ProfessionalPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { RequestDetailPage } from '@/pages/RequestDetailPage'
 import { RequestsPage } from '@/pages/RequestsPage'
+import { ReviewPage } from '@/pages/ReviewPage'
 import { SearchPage } from '@/pages/SearchPage'
 
 import { AdminRoute } from './AdminRoute'
@@ -31,12 +41,29 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           { path: '/solicitudes', element: <RequestsPage /> },
+          { path: '/solicitudes/:requestId', element: <RequestDetailPage /> },
+          { path: '/solicitudes/:requestId/resena', element: <ReviewPage /> },
+          { path: '/profesional/:uid/solicitar', element: <NewRequestPage /> },
           { path: '/chats', element: <ChatsPage /> },
           { path: '/chats/:chatId', element: <ChatPage /> },
+          { path: '/notificaciones', element: <NotificationsPage /> },
           { path: '/perfil', element: <ProfilePage /> },
+          { path: '/mi-trabajo', element: <ProfessionalDashboardPage /> },
+          { path: '/perfil/profesional', element: <ProfessionalEditPage /> },
           {
             element: <AdminRoute />,
-            children: [{ path: '/admin', element: <AdminPage /> }],
+            children: [
+              {
+                path: '/admin',
+                element: <AdminLayout />,
+                children: [
+                  { index: true, element: <AdminReportsPage /> },
+                  { path: 'categorias', element: <AdminCategoriesPage /> },
+                  { path: 'profesionales', element: <AdminProfessionalsPage /> },
+                  { path: 'usuarios', element: <AdminUsersPage /> },
+                ],
+              },
+            ],
           },
         ],
       },

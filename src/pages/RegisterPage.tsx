@@ -71,7 +71,12 @@ export function RegisterPage() {
         </Button>
       </form>
 
-      <Button variant="secondary" size="lg" disabled={loading} onClick={() => void run(loginWithGoogle)}>
+      <Button
+        variant="secondary"
+        size="lg"
+        disabled={loading}
+        onClick={() => void run(loginWithGoogle)}
+      >
         Continuar con Google
       </Button>
 

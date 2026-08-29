@@ -11,7 +11,9 @@ import {
   where,
 } from 'firebase/firestore'
 
-import { db } from '@/lib/firebase'
+import { getFunctions, httpsCallable } from 'firebase/functions'
+
+import { app, db } from '@/lib/firebase'
 import type { Chat, Message } from '@/types/models'
 
 /** Suscripción en vivo a la lista de chats del usuario. */
@@ -28,15 +30,30 @@ export function subscribeToChats(uid: string, onChange: (chats: Chat[]) => void)
 }
 
 /** Suscripción en vivo a los mensajes de un chat, del más viejo al más nuevo. */
+/** Suscripción al chat en sí (participantes, oficio, solicitud asociada). */
+export function subscribeToChat(chatId: string, onChange: (chat: Chat | null) => void) {
+  return onSnapshot(doc(db, 'chats', chatId), (snap) =>
+    onChange(snap.exists() ? ({ id: snap.id, ...snap.data() } as Chat) : null),
+  )
+}
+
 export function subscribeToMessages(chatId: string, onChange: (messages: Message[]) => void) {
   return onSnapshot(
-    query(
-      collection(db, 'chats', chatId, 'messages'),
-      orderBy('createdAt', 'asc'),
-      limit(200),
-    ),
+    query(collection(db, 'chats', chatId, 'messages'), orderBy('createdAt', 'asc'), limit(200)),
     (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Message)),
   )
+}
+
+/**
+ * Pone en cero los no leídos del usuario en un chat. Va por Cloud Function
+ * porque `unreadCount` no es escribible desde el cliente.
+ */
+export async function markChatRead(chatId: string) {
+  const callable = httpsCallable<{ chatId: string }, { ok: boolean }>(
+    getFunctions(app),
+    'markChatRead',
+  )
+  await callable({ chatId })
 }
 
 export async function sendMessage(chatId: string, senderId: string, text: string) {

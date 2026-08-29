@@ -68,10 +68,16 @@ export function LoginPage() {
       </form>
 
       <div className="flex items-center gap-3 text-xs text-slate-400">
-        <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />o<span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+        <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />o
+        <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
       </div>
 
-      <Button variant="secondary" size="lg" disabled={loading} onClick={() => void run(loginWithGoogle)}>
+      <Button
+        variant="secondary"
+        size="lg"
+        disabled={loading}
+        onClick={() => void run(loginWithGoogle)}
+      >
         Continuar con Google
       </Button>
 

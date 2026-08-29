@@ -50,7 +50,8 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSelf(uid);
       allow update: if isAdmin() || (isSelf(uid) && unchanged([
-        'ratingAvg', 'ratingCount', 'completedJobs', 'avgResponseMs', 'verified'
+        'ratingAvg', 'ratingCount', 'completedJobs', 'avgResponseMs',
+        'answeredRequests', 'verified'
       ]));
       allow delete: if isAdmin() || isSelf(uid);
     }
@@ -88,10 +89,35 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.participantIds ==
              [request.auth.uid, request.resource.data.professionalId];
-      // El cambio de estado válido se valida en la Cloud Function; acá solo
-      // garantizamos que nadie ajeno toque la solicitud ni reescriba las partes.
+      function isClient() {
+        return signedIn() && request.auth.uid == resource.data.clientId;
+      }
+
+      function isPro() {
+        return signedIn() && request.auth.uid == resource.data.professionalId;
+      }
+
+      function statusChangedTo(from, to) {
+        return resource.data.status == from && request.resource.data.status == to;
+      }
+
+      /** Matriz de transiciones: quién puede pasar de qué estado a cuál. */
+      function validTransition() {
+        return request.resource.data.status == resource.data.status
+          || (isPro() && (
+                statusChangedTo('pending', 'accepted')
+             || statusChangedTo('pending', 'rejected')
+             || statusChangedTo('accepted', 'in_progress')))
+          || (isClient() && statusChangedTo('pending', 'cancelled'))
+          || ((isClient() || isPro()) && (
+                statusChangedTo('in_progress', 'completed')
+             || statusChangedTo('accepted', 'cancelled')
+             || statusChangedTo('in_progress', 'cancelled')));
+      }
+
       allow update: if isParticipant()
-        && unchanged(['clientId', 'professionalId', 'participantIds', 'createdAt']);
+        && validTransition()
+        && unchanged(['clientId', 'professionalId', 'participantIds', 'chatId', 'createdAt']);
       allow delete: if false;
     }
 
@@ -105,7 +131,8 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.auth.uid in request.resource.data.participantIds
         && request.resource.data.participantIds.size() == 2;
-      allow update: if isMember() && unchanged(['participantIds', 'createdAt']);
+      allow update: if isMember()
+        && unchanged(['participantIds', 'requestId', 'categoryId', 'unreadCount', 'createdAt']);
       allow delete: if false;
 
       match /messages/{messageId} {

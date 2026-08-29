@@ -68,7 +68,7 @@ export interface Professional {
   /** Desnormalizado desde users/{uid} para listar sin N lecturas extra. */
   displayName: string
   photoURL: string | null
-  /** Slugs de `categories`. Máximo 3 para que los filtros sean baratos. */
+  /** Slugs de `categories`. Hasta 5: un profesional puede tener varios oficios. */
   categoryIds: Id[]
   headline: string
   description: string
@@ -92,6 +92,8 @@ export interface Professional {
   completedJobs: number
   /** Para ordenar por "responde rápido". Milisegundos promedio. */
   avgResponseMs: number | null
+  /** Denominador de `avgResponseMs`. Lo mantiene la Cloud Function. */
+  answeredRequests?: number
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -127,12 +129,7 @@ export interface Category {
 /* -------------------------------------------------------------------------- */
 
 export type RequestStatus =
-  | 'pending'
-  | 'accepted'
-  | 'rejected'
-  | 'in_progress'
-  | 'completed'
-  | 'cancelled'
+  'pending' | 'accepted' | 'rejected' | 'in_progress' | 'completed' | 'cancelled'
 
 /**
  * Solicitud de trabajo. Es el hilo conductor de la app: habilita el chat,
@@ -171,6 +168,14 @@ export interface Chat {
   /** Datos mínimos de cada participante para pintar la lista sin joins. */
   participants: Record<Id, { displayName: string; photoURL: string | null }>
   requestId: Id | null
+  /**
+   * Oficio por el que se originó la conversación. Un profesional puede ser
+   * jardinero y electricista a la vez: esto permite mostrar "te escribieron
+   * por jardinería" y filtrar la casilla por oficio.
+   */
+  categoryId: Id | null
+  /** Título de la solicitud, para ubicar la charla de un vistazo. */
+  requestTitle: string | null
   lastMessage: string
   lastMessageAt: Timestamp | null
   lastMessageSenderId: Id | null
@@ -256,13 +261,7 @@ export interface Favorite {
 export type ReportTargetType = 'user' | 'professional' | 'review' | 'message'
 export type ReportStatus = 'open' | 'reviewing' | 'resolved' | 'dismissed'
 
-export type ReportReason =
-  | 'spam'
-  | 'fraud'
-  | 'abuse'
-  | 'fake_profile'
-  | 'no_show'
-  | 'other'
+export type ReportReason = 'spam' | 'fraud' | 'abuse' | 'fake_profile' | 'no_show' | 'other'
 
 /** Denuncia hecha por un usuario. Solo la lee y resuelve un admin. */
 export interface Report {

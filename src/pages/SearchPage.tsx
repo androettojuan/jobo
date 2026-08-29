@@ -17,7 +17,8 @@ export function SearchPage() {
   const categoryId = params.get('categoria') ?? ''
   const locality = useLocalityStore((s) => s.locality)
   const [results, setResults] = useState<Professional[]>([])
-  const [term, setTerm] = useState('')
+  // El texto puede venir de la home (`?q=`); desde acá se sigue editando suelto.
+  const [term, setTerm] = useState(() => params.get('q') ?? '')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 

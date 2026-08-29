@@ -32,3 +32,6 @@ dist-ssr
 .firebase/
 firebase-debug.log
 functions/lib/
+
+# Salidas de Playwright MCP
+.playwright-mcp/

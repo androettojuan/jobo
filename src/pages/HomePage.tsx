@@ -21,7 +21,9 @@ export function HomePage() {
           <p className="text-sm text-slate-500">
             {profile ? `Hola, ${profile.displayName.split(' ')[0]}` : 'Bienvenido a'}
           </p>
-          <h1 className="text-2xl font-bold text-brand-600">Jobo</h1>
+          <h1>
+            <img src="/img/jobo-logo.png" alt="Jobo" className="h-8 w-auto" />
+          </h1>
         </div>
         {!profile && (
           <Link to="/login" className="shrink-0 text-sm font-medium text-brand-600 hover:underline">

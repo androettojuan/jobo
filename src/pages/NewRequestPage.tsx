@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
+import { PhotoPicker } from '@/components/PhotoPicker'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
@@ -11,6 +12,7 @@ import { useLocalityStore } from '@/features/localities/store'
 import { getProfessional } from '@/features/professionals/api'
 import { createRequest } from '@/features/requests/createApi'
 import { CATEGORIES_BY_ID } from '@/lib/categories'
+import { newAttachmentFolder } from '@/lib/storage'
 import type { Professional } from '@/types/models'
 
 export function NewRequestPage() {
@@ -25,6 +27,9 @@ export function NewRequestPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [preferredAt, setPreferredAt] = useState('')
+  const [photos, setPhotos] = useState<string[]>([])
+  // Carpeta fija para esta solicitud: se elige antes de crearla en Firestore.
+  const [folder] = useState(newAttachmentFolder)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
@@ -60,7 +65,7 @@ export function NewRequestPage() {
         description,
         preferredAt: preferredAt ? new Date(preferredAt) : null,
         locality: profile.locality ?? locality,
-        photos: [],
+        photos,
       })
       navigate(`/solicitudes/${requestId}`, { replace: true })
     } catch {
@@ -125,6 +130,16 @@ export function NewRequestPage() {
         maxLength={1000}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+      />
+
+      <PhotoPicker
+        label="Fotos del problema (opcional)"
+        hint="Una foto ahorra idas y vueltas: se puede presupuestar mejor."
+        photos={photos}
+        onChange={setPhotos}
+        buildPath={(file) =>
+          `requests/${folder}/${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`
+        }
       />
 
       <Input

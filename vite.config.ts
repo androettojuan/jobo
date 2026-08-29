@@ -22,7 +22,7 @@ export default defineConfig({
         name: 'Jobo',
         short_name: 'Jobo',
         description: 'Encontrá profesionales cerca tuyo',
-        theme_color: '#0f172a',
+        theme_color: '#09bc8a',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',

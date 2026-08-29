@@ -1,10 +1,11 @@
-import { ArrowLeft, Send } from 'lucide-react'
+import { ArrowLeft, ImagePlus, Send } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
 import {
   markChatRead,
+  sendImageMessage,
   sendMessage,
   subscribeToChat,
   subscribeToMessages,
@@ -21,6 +22,7 @@ export function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -55,6 +57,21 @@ export function ChatPage() {
       await sendMessage(chatId, firebaseUser.uid, pending)
     } catch {
       setText(pending) // no perdemos lo escrito si falla el envío
+      setError('No pudimos enviar el mensaje.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  async function onPhoto(file: File) {
+    if (!chatId || !firebaseUser) return
+
+    setError('')
+    setSending(true)
+    try {
+      await sendImageMessage(chatId, firebaseUser.uid, file)
+    } catch {
+      setError('No pudimos enviar la foto.')
     } finally {
       setSending(false)
     }
@@ -110,6 +127,20 @@ export function ChatPage() {
             )
           }
 
+          if (message.kind === 'image' && message.imageUrl) {
+            return (
+              <li key={message.id} className={cn('max-w-[70%]', mine ? 'self-end' : 'self-start')}>
+                <a href={message.imageUrl} target="_blank" rel="noreferrer">
+                  <img
+                    src={message.imageUrl}
+                    alt="Foto enviada en el chat"
+                    className="rounded-2xl object-cover"
+                  />
+                </a>
+              </li>
+            )
+          }
+
           return (
             <li
               key={message.id}
@@ -127,10 +158,30 @@ export function ChatPage() {
         <div ref={bottomRef} />
       </ul>
 
+      {error && <p className="px-4 pb-1 text-xs text-red-600">{error}</p>}
+
       <form
         onSubmit={onSubmit}
         className="safe-bottom flex gap-2 border-t border-slate-200 p-3 dark:border-slate-800"
       >
+        <label
+          className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-slate-300 text-slate-500 dark:border-slate-700"
+          aria-label="Enviar una foto"
+        >
+          <ImagePlus className="size-5" aria-hidden />
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            disabled={sending}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) void onPhoto(file)
+              e.target.value = ''
+            }}
+          />
+        </label>
+
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}

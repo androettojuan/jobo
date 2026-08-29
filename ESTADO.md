@@ -49,6 +49,13 @@ solicitud → chat → estados → reseña → rating recalculado):
 - Panel de admin: denuncias, oficios propuestos (aprobar/renombrar/unificar),
   verificación de profesionales, suspensión de cuentas.
 - Denuncias desde perfiles y reseñas.
+- Fotos en solicitudes, en el chat, en el perfil profesional y avatar, con
+  compresión en el navegador antes de subir (máx. 1600px, 5 MB).
+- **32 tests de las reglas de Firestore** (`npm test`, con los emuladores
+  corriendo): transiciones de estado, acceso a chats y solicitudes ajenas,
+  agregados que el cliente no puede tocar, reseñas y moderación.
+- Identidad visual de la marca original (verde `#09bc8a`), iconos de la PWA,
+  favicon y aviso de instalación/actualización.
 
 ## Pendiente para el próximo tramo
 
@@ -65,21 +72,18 @@ Por orden sugerido:
    Requiere plan Blaze. Sin esto no hay ratings agregados, contadores ni push.
 5. **Clave VAPID** para push web: Firebase Console → Cloud Messaging →
    certificados push web → completar `VITE_FIREBASE_VAPID_KEY` en `.env.local`.
-6. **Iconos de la PWA**: faltan `public/pwa-192x192.png` y `pwa-512x512.png`
-   (el manifest ya los referencia) y un favicon propio.
-7. **Deploy del front**: `npm run build && firebase deploy --only hosting`.
+6. **Deploy del front**: `npm run build && firebase deploy --only hosting`.
 
 ### Mejoras que valen la pena después
 
-- Fotos en la solicitud y en el chat (Storage ya tiene las reglas puestas).
 - Historial de reseñas propias y "mis calificaciones" en el perfil.
 - Búsqueda por texto libre (hoy solo por categoría y localidad).
 - Ordenar resultados por cercanía real, no solo por rating.
 - Ampliar el catálogo de localidades más allá de Calamuchita.
-- Tests: no hay ninguno todavía. Empezar por las reglas de Firestore con
-  `@firebase/rules-unit-testing`, que es donde más duele un error.
-- Revisar el aviso de instalación de la PWA y el prompt de actualización
-  (`registerType: 'prompt'` está configurado pero no hay UI para aceptarlo).
+- Tests de los flujos de la app (hoy solo están cubiertas las reglas).
+- Notificar por email además de push, para quien no instala la PWA.
+- Un logo propio en SVG: los iconos actuales se generaron a partir del PNG
+  viejo (`scripts/` no los versiona, están en `public/`).
 
 ## Cómo levantar todo
 
@@ -87,6 +91,7 @@ Por orden sugerido:
 npm install
 npm run dev            # front en http://localhost:5173
 npm run emulators      # Auth, Firestore, Storage y Functions
+npm test               # tests de las reglas (necesita los emuladores)
 ```
 
 Para desarrollar contra los emuladores, poner `VITE_USE_EMULATORS=true` en

@@ -14,6 +14,7 @@ import {
 import { httpsCallable } from 'firebase/functions'
 
 import { db, functions } from '@/lib/firebase'
+import { uploadImage } from '@/lib/storage'
 import type { Chat, Message } from '@/types/models'
 
 /** Suscripción en vivo a la lista de chats del usuario. */
@@ -51,6 +52,28 @@ export function subscribeToMessages(chatId: string, onChange: (messages: Message
 export async function markChatRead(chatId: string) {
   const callable = httpsCallable<{ chatId: string }, { ok: boolean }>(functions, 'markChatRead')
   await callable({ chatId })
+}
+
+/** Envía una foto como mensaje. Se comprime antes de subirla. */
+export async function sendImageMessage(chatId: string, senderId: string, file: File) {
+  const path = `chats/${chatId}/${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`
+  const imageUrl = await uploadImage(path, file)
+
+  await addDoc(collection(db, 'chats', chatId, 'messages'), {
+    chatId,
+    senderId,
+    kind: 'image',
+    text: '',
+    imageUrl,
+    readBy: [senderId],
+    createdAt: serverTimestamp(),
+  })
+
+  await updateDoc(doc(db, 'chats', chatId), {
+    lastMessage: '📷 Foto',
+    lastMessageAt: serverTimestamp(),
+    lastMessageSenderId: senderId,
+  })
 }
 
 export async function sendMessage(chatId: string, senderId: string, text: string) {

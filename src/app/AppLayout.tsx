@@ -4,6 +4,8 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth/useAuth'
 import { useUnreadChats } from '@/features/chat/useUnreadChats'
 import { useUnreadNotifications } from '@/features/notifications/useUnreadCount'
+import { InstallPrompt } from '@/features/pwa/InstallPrompt'
+import { UpdatePrompt } from '@/features/pwa/UpdatePrompt'
 import { cn } from '@/lib/utils'
 
 const tabs = [
@@ -46,8 +48,11 @@ export function AppLayout() {
       )}
 
       <main className={cn('flex-1 overflow-y-auto', immersive ? 'h-full' : 'safe-top pb-20')}>
+        {!immersive && <InstallPrompt />}
         <Outlet />
       </main>
+
+      <UpdatePrompt />
 
       {!immersive && (
         <nav className="safe-bottom fixed inset-x-0 bottom-0 mx-auto max-w-2xl border-t border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">

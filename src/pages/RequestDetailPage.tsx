@@ -96,6 +96,22 @@ export function RequestDetailPage() {
         {request.description}
       </p>
 
+      {request.photos.length > 0 && (
+        <ul className="-mx-4 flex gap-2 overflow-x-auto px-4">
+          {request.photos.map((url) => (
+            <li key={url}>
+              <a href={url} target="_blank" rel="noreferrer">
+                <img
+                  src={url}
+                  alt="Foto de la solicitud"
+                  className="size-32 rounded-xl object-cover"
+                />
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {request.preferredAt && (
         <p className="text-sm text-slate-500">
           Preferencia de fecha: {request.preferredAt.toDate().toLocaleString('es-AR')}

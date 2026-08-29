@@ -40,7 +40,9 @@ export function LoginPage() {
   return (
     <div className="safe-top mx-auto flex min-h-full w-full max-w-sm flex-col justify-center gap-6 p-6">
       <header className="text-center">
-        <h1 className="text-3xl font-bold text-brand-600">Jobo</h1>
+        <h1>
+          <img src="/img/jobo-logo.png" alt="Jobo" className="mx-auto h-12 w-auto" />
+        </h1>
         <p className="mt-1 text-slate-500">Encontrá al profesional que necesitás</p>
       </header>
 

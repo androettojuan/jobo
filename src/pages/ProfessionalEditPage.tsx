@@ -1,7 +1,8 @@
-import { ArrowLeft, Plus, X } from 'lucide-react'
+import { ArrowLeft, Plus } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { PhotoPicker } from '@/components/PhotoPicker'
 import { Button } from '@/components/ui/Button'
 import { ChipGroup } from '@/components/ui/ChipGroup'
 import { Input } from '@/components/ui/Input'
@@ -12,7 +13,6 @@ import {
   getMyProfessional,
   proposeCategory,
   saveProfessional,
-  uploadWorkPhoto,
   type ProfessionalDraft,
 } from '@/features/professionals/profileApi'
 import { CATEGORIES } from '@/lib/categories'
@@ -99,16 +99,6 @@ export function ProfessionalEditPage() {
       setNewCategory('')
     } catch {
       setError('No pudimos registrar ese oficio. Probá con otro nombre.')
-    }
-  }
-
-  async function onPhoto(file: File) {
-    if (!firebaseUser) return
-    try {
-      const url = await uploadWorkPhoto(firebaseUser.uid, file)
-      setDraft((prev) => ({ ...prev, photos: [...prev.photos, url] }))
-    } catch {
-      setError('No pudimos subir la foto. Probá con una más liviana.')
     }
   }
 
@@ -273,46 +263,15 @@ export function ProfessionalEditPage() {
         />
       </fieldset>
 
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Fotos de trabajos
-        </span>
-        <ul className="flex flex-wrap gap-2">
-          {draft.photos.map((url) => (
-            <li key={url} className="relative">
-              <img src={url} alt="" className="size-20 rounded-xl object-cover" />
-              <button
-                type="button"
-                aria-label="Quitar foto"
-                onClick={() =>
-                  setDraft((prev) => ({
-                    ...prev,
-                    photos: prev.photos.filter((photo) => photo !== url),
-                  }))
-                }
-                className="absolute -top-1.5 -right-1.5 grid size-6 place-items-center rounded-full bg-slate-900 text-white"
-              >
-                <X className="size-3.5" aria-hidden />
-              </button>
-            </li>
-          ))}
-          <li>
-            <label className="grid size-20 cursor-pointer place-items-center rounded-xl border border-dashed border-slate-300 text-slate-400 dark:border-slate-700">
-              <Plus className="size-5" aria-hidden />
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) void onPhoto(file)
-                  e.target.value = ''
-                }}
-              />
-            </label>
-          </li>
-        </ul>
-      </div>
+      <PhotoPicker
+        label="Fotos de trabajos"
+        hint="Mostrá lo que hacés: es lo primero que mira quien te va a contratar."
+        photos={draft.photos}
+        onChange={(photos) => patch({ photos })}
+        buildPath={(file) =>
+          `users/${firebaseUser?.uid}/work/${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`
+        }
+      />
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="status" className="text-sm font-medium text-slate-700 dark:text-slate-300">

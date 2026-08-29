@@ -1,7 +1,5 @@
 import { collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
-
-import { db, storage } from '@/lib/firebase'
+import { db } from '@/lib/firebase'
 import type { LocalityRef, Professional, ProfessionalStatus } from '@/types/models'
 
 export interface ProfessionalDraft {
@@ -71,14 +69,6 @@ export async function saveProfessional(
     isProfessional: true,
     updatedAt: serverTimestamp(),
   })
-}
-
-/** Sube una foto de trabajo y devuelve su URL pública. */
-export async function uploadWorkPhoto(uid: string, file: File) {
-  const name = `${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`
-  const fileRef = ref(storage, `users/${uid}/work/${name}`)
-  await uploadBytes(fileRef, file)
-  return getDownloadURL(fileRef)
 }
 
 /**

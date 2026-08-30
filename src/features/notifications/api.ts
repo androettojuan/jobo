@@ -65,6 +65,24 @@ export async function enablePushNotifications(uid: string) {
   return token
 }
 
+/** El service worker que atiende los push, si está registrado. */
+export function getMessagingRegistration() {
+  if (!('serviceWorker' in navigator)) return Promise.resolve(undefined)
+  return navigator.serviceWorker.getRegistration('/firebase-cloud-messaging-push-scope')
+}
+
+/** Token actual de este dispositivo, sin registrarlo ni pedir permisos. */
+export async function getCurrentToken() {
+  if (!(await isSupported())) return null
+  const registration = await getMessagingRegistration()
+  if (!registration) return null
+
+  return getToken(getMessaging(app), {
+    vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+    serviceWorkerRegistration: registration,
+  })
+}
+
 /**
  * Muestra un aviso del sistema desde la propia página, para los push que
  * Firebase entrega a la app en vez de mostrarlos él. Pasa cuando la app sigue

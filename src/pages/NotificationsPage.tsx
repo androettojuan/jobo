@@ -15,6 +15,7 @@ import {
   subscribeToNotifications,
 } from '@/features/notifications/api'
 import type { PushFailure } from '@/features/notifications/api'
+import { PushDiagnostics } from '@/features/notifications/PushDiagnostics'
 import { cn } from '@/lib/utils'
 import type { AppNotification } from '@/types/models'
 
@@ -171,6 +172,8 @@ export function NotificationsPage() {
           {testResult && <p className="text-sm text-slate-500">{testResult}</p>}
         </div>
       )}
+
+      <PushDiagnostics />
 
       {listError && <p className="text-sm text-red-600">{listError}</p>}
 

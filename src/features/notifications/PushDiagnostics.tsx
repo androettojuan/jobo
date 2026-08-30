@@ -17,7 +17,7 @@ interface Estado {
  * muestra la otra mitad, que solo se puede mirar desde el propio teléfono.
  */
 export function PushDiagnostics() {
-  const { profile } = useAuth()
+  const { profile, isAdmin } = useAuth()
   const [estado, setEstado] = useState<Estado | null>(null)
 
   useEffect(() => {
@@ -75,6 +75,9 @@ export function PushDiagnostics() {
       cancelado = true
     }
   }, [profile])
+
+  // Es una herramienta de soporte, no algo que le sirva a un vecino.
+  if (!isAdmin) return null
 
   return (
     <details className="rounded-2xl border border-slate-200 p-3 text-sm dark:border-slate-800">

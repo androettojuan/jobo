@@ -84,9 +84,16 @@ tramo de registro, perfil y contadores también contra producción:
   al lado del logo—, así que acompaña el scroll en vez de quedar fija arriba.
 - El historial de avisos se puede vaciar desde la propia pantalla.
 - **Push verificados en un teléfono Android con la PWA instalada**, de punta a
-  punta: registro del dispositivo, envío desde el servidor y aviso en pantalla.
-  La pantalla de avisos tiene un botón que dispara un aviso local, que
-  distingue "el teléfono los tiene apagados" de "el push no llega".
+  punta y con la app cerrada: registro del dispositivo, envío desde el servidor
+  y aviso en la barra de notificaciones. Van solo con `data` —si llevan
+  `notification`, el SDK dibuja su propio aviso además del que dibuja el
+  service worker y se ven dos— y con urgencia alta, porque si no Android los
+  demora o los descarta en segundo plano.
+- La pantalla de avisos tiene un botón que dispara un aviso local (distingue
+  "el teléfono los tiene apagados" de "el push no llega") y, para el admin, un
+  panel con lo que solo se puede mirar desde el propio dispositivo: permiso,
+  service worker, suscripción push y si el token de ese equipo está guardado
+  en la cuenta.
 
 ## Pendiente para el próximo tramo
 
@@ -108,6 +115,11 @@ busca actualizaciones cada hora y cada vez que vuelve al frente.
 Para diagnosticar push, este es el orden que sirvió: ¿hay token en
 `users/{uid}.fcmTokens`? → ¿FCM acepta el envío a ese token? → ¿el aviso
 local del botón "Probar un aviso" aparece? Cada paso descarta una mitad.
+
+Tercera: un service worker nuevo no reemplaza al viejo hasta que se cierran
+todas las pestañas. El de los push ahora hace `skipWaiting()`, pero mientras
+no lo tuvo, cada arreglo parecía no funcionar porque en el teléfono seguía
+corriendo el de antes.
 
 Y la segunda trampa, peor que la primera: `firebase.json` no tenía el hook
 `predeploy` que compila las funciones, así que `firebase deploy --only

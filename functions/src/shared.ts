@@ -8,6 +8,13 @@ export const db = getFirestore()
 export const messaging = getMessaging()
 export { FieldValue }
 
+/**
+ * Dominio público de la app. `webpush.fcmOptions.link` exige una URL absoluta
+ * con HTTPS: con una ruta relativa el envío se acepta igual, pero el navegador
+ * puede descartar el aviso sin avisar a nadie.
+ */
+const APP_URL = 'https://jobo-8b688.web.app'
+
 export type NotificationType =
   | 'request_received'
   | 'request_accepted'
@@ -74,7 +81,7 @@ export async function notify({
     notification: { title, body },
     data: { link, type },
     webpush: {
-      fcmOptions: { link },
+      fcmOptions: { link: `${APP_URL}${link}` },
       notification: { icon: '/pwa-192x192.png' },
     },
   })

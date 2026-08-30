@@ -2,16 +2,37 @@ import { useRegisterSW } from 'virtual:pwa-register/react'
 
 import { Button } from '@/components/ui/Button'
 
+/** Cada cuánto se pregunta si hay versión nueva, con la app abierta. */
+const CHECK_EVERY_MS = 60 * 60 * 1000
+
 /**
  * Aviso de "hay una versión nueva". Con `registerType: 'prompt'` el service
  * worker espera a que la persona acepte, así no se recarga la app en medio
  * de un chat.
+ *
+ * El navegador, por su cuenta, casi no busca actualizaciones en una PWA
+ * instalada que vive en segundo plano: puede quedarse días con la versión
+ * vieja sin enterarse. Por eso preguntamos nosotros, cada tanto y cada vez
+ * que la app vuelve al frente.
  */
 export function UpdatePrompt() {
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
-  } = useRegisterSW()
+  } = useRegisterSW({
+    onRegisteredSW(_url, registration) {
+      if (!registration) return
+
+      const check = () => {
+        if (document.visibilityState === 'visible') void registration.update()
+      }
+
+      const timer = setInterval(check, CHECK_EVERY_MS)
+      document.addEventListener('visibilitychange', check)
+      // No hay desmontaje que valga: el componente vive mientras la app.
+      void timer
+    },
+  })
 
   if (!needRefresh) return null
 

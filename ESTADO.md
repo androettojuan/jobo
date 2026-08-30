@@ -83,17 +83,31 @@ tramo de registro, perfil y contadores también contra producción:
 - La campana de avisos vive dentro del contenido de cada pantalla —en la home,
   al lado del logo—, así que acompaña el scroll en vez de quedar fija arriba.
 - El historial de avisos se puede vaciar desde la propia pantalla.
+- **Push verificados en un teléfono Android con la PWA instalada**, de punta a
+  punta: registro del dispositivo, envío desde el servidor y aviso en pantalla.
+  La pantalla de avisos tiene un botón que dispara un aviso local, que
+  distingue "el teléfono los tiene apagados" de "el push no llega".
 
 ## Pendiente para el próximo tramo
 
-1. **Probar los push en un teléfono real.** Es lo único sin verificar. Si algo
-   falla, la pantalla de avisos ahora dice cuál de los cuatro casos es
-   (permiso denegado, navegador sin soporte, falta la clave VAPID, error
-   técnico) en vez de culpar siempre al permiso.
+Nada bloqueante. Lo que sigue es cargar profesionales reales: hoy la home se
+ve en gris, con "sin nadie aún" en casi todos los rubros.
 
 > Al desplegar Cloud Functions por primera vez en un proyecto, las de 2ª
 > generación fallan con un error de permisos de Eventarc. No es un problema del
 > código: hay que esperar unos minutos y volver a correr el deploy.
+
+### Lo que costó caro una vez
+
+Los push "no funcionaban" y el problema no estaba en el código nuevo: el
+teléfono seguía con el **service worker viejo** cacheado, así que ningún
+arreglo llegaba a tener efecto. Antes de dar por roto algo del lado del
+servidor, confirmá que el dispositivo tenga la versión nueva. La app ahora
+busca actualizaciones cada hora y cada vez que vuelve al frente.
+
+Para diagnosticar push, este es el orden que sirvió: ¿hay token en
+`users/{uid}.fcmTokens`? → ¿FCM acepta el envío a ese token? → ¿el aviso
+local del botón "Probar un aviso" aparece? Cada paso descarta una mitad.
 
 ### Cómo desplegar
 

@@ -74,7 +74,10 @@ export async function notify({
 
   const snap = await userRef.get()
   const tokens: string[] = snap.get('fcmTokens') ?? []
-  if (tokens.length === 0) return
+  if (tokens.length === 0) {
+    console.log(`push ${type} para ${uid}: sin dispositivos registrados`)
+    return
+  }
 
   const response = await messaging.sendEachForMulticast({
     tokens,
@@ -93,6 +96,16 @@ export async function notify({
     'messaging/invalid-registration-token',
     'messaging/invalid-argument',
   ])
+
+  // Sin esto, un push que no llega no deja rastro en ningún lado: la función
+  // termina "bien" y el aviso se pierde en silencio.
+  console.log(
+    `push ${type} para ${uid}: ${response.successCount}/${tokens.length} entregados`,
+    response.responses
+      .map((r, i) => (r.success ? null : `token ${i + 1}: ${r.error?.code}`))
+      .filter(Boolean)
+      .join(' | '),
+  )
 
   const stale = response.responses.flatMap((result, index) => {
     const token = tokens[index]

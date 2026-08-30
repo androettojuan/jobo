@@ -66,6 +66,28 @@ export async function enablePushNotifications(uid: string) {
 }
 
 /**
+ * Muestra un aviso del sistema desde la propia página, para los push que
+ * Firebase entrega a la app en vez de mostrarlos él. Pasa cuando la app sigue
+ * viva en segundo plano: no está en pantalla, pero tampoco cerrada.
+ */
+export async function showSystemNotification(title: string, body: string, link: string) {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return false
+
+  const registration = await navigator.serviceWorker.getRegistration(
+    '/firebase-cloud-messaging-push-scope',
+  )
+  if (!registration) return false
+
+  await registration.showNotification(title, {
+    body,
+    icon: '/pwa-192x192.png',
+    badge: '/pwa-192x192.png',
+    data: { link },
+  })
+  return true
+}
+
+/**
  * Muestra un aviso generado por el propio dispositivo, sin pasar por la red.
  * Sirve para separar dos problemas que se ven igual: que el teléfono tenga
  * los avisos apagados a nivel sistema, o que el push no esté llegando.

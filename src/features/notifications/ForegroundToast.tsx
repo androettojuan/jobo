@@ -2,7 +2,7 @@ import { Bell, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { onForegroundMessage } from './api'
+import { onForegroundMessage, showSystemNotification } from './api'
 
 interface Aviso {
   title: string
@@ -13,7 +13,10 @@ interface Aviso {
 /**
  * Los push que llegan con la app abierta no los muestra el sistema: Firebase
  * los entrega a la página y, si nadie los atiende, se pierden en silencio.
- * Esto los muestra como un aviso arriba de todo, que lleva a donde apunta.
+ *
+ * Con la app en pantalla se muestran como un cartel arriba de todo. Con la app
+ * minimizada —viva pero sin nadie mirándola— un cartel no lo ve nadie, así que
+ * ahí pedimos al sistema que muestre la notificación de verdad.
  */
 export function ForegroundToast() {
   const [aviso, setAviso] = useState<Aviso | null>(null)
@@ -24,7 +27,11 @@ export function ForegroundToast() {
     let cancelled = false
 
     onForegroundMessage((title, body, link) => {
-      setAviso({ title, body, link })
+      if (document.visibilityState === 'visible') {
+        setAviso({ title, body, link })
+        return
+      }
+      void showSystemNotification(title, body, link)
     })
       .then((unsubscribe) => {
         if (cancelled) unsubscribe()

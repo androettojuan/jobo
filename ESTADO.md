@@ -109,6 +109,13 @@ Para diagnosticar push, este es el orden que sirvió: ¿hay token en
 `users/{uid}.fcmTokens`? → ¿FCM acepta el envío a ese token? → ¿el aviso
 local del botón "Probar un aviso" aparece? Cada paso descarta una mitad.
 
+Y la segunda trampa, peor que la primera: `firebase.json` no tenía el hook
+`predeploy` que compila las funciones, así que `firebase deploy --only
+functions` decía "Successful update" mientras subía el JavaScript viejo que
+hubiera quedado en `functions/lib`. Días de cambios que nunca llegaron a
+producción, sin un solo error a la vista. Si tocás algo en `functions/`,
+comprobá que el cambio esté en el código compilado, no solo en el fuente.
+
 ### Cómo desplegar
 
 ```bash

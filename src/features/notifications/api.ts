@@ -65,6 +65,28 @@ export async function enablePushNotifications(uid: string) {
   return token
 }
 
+/**
+ * Muestra un aviso generado por el propio dispositivo, sin pasar por la red.
+ * Sirve para separar dos problemas que se ven igual: que el teléfono tenga
+ * los avisos apagados a nivel sistema, o que el push no esté llegando.
+ */
+export async function showTestNotification() {
+  if (typeof Notification === 'undefined') throw new PushError('unsupported')
+  if (Notification.permission !== 'granted') throw new PushError('denied')
+
+  const registration = await navigator.serviceWorker.getRegistration(
+    '/firebase-cloud-messaging-push-scope',
+  )
+  if (!registration) throw new PushError('failed')
+
+  await registration.showNotification('Jobo', {
+    body: 'Prueba: si ves este aviso, tu teléfono los muestra bien.',
+    icon: '/pwa-192x192.png',
+    badge: '/pwa-192x192.png',
+    tag: 'jobo-prueba',
+  })
+}
+
 /** Mensajes que llegan con la app abierta: no los muestra el sistema. */
 export async function onForegroundMessage(
   handler: (title: string, body: string, link: string) => void,

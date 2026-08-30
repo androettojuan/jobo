@@ -11,6 +11,7 @@ import {
   enablePushNotifications,
   markNotificationRead,
   PushError,
+  showTestNotification,
   subscribeToNotifications,
 } from '@/features/notifications/api'
 import type { PushFailure } from '@/features/notifications/api'
@@ -33,6 +34,7 @@ export function NotificationsPage() {
   const [failure, setFailure] = useState<PushFailure | null>(null)
   const [clearing, setClearing] = useState(false)
   const [listError, setListError] = useState('')
+  const [testResult, setTestResult] = useState('')
   // Borrar no se deshace: el propio botón pide confirmación en un segundo
   // toque, así no hace falta un diálogo del navegador.
   const [confirmingClear, setConfirmingClear] = useState(false)
@@ -77,6 +79,16 @@ export function NotificationsPage() {
       cancelled = true
     }
   }, [firebaseUser])
+
+  async function testPush() {
+    setTestResult('')
+    try {
+      await showTestNotification()
+      setTestResult('Aviso enviado. Si no lo viste, tu teléfono los tiene apagados para Jobo.')
+    } catch {
+      setTestResult('Este dispositivo no pudo mostrar el aviso.')
+    }
+  }
 
   async function enablePush() {
     if (!firebaseUser) return
@@ -146,6 +158,17 @@ export function NotificationsPage() {
             <BellRing className="size-4" aria-hidden />
             Activar avisos
           </Button>
+        </div>
+      )}
+
+      {pushState === 'on' && (
+        <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
+          <p className="text-sm font-medium">Los avisos están activos en este dispositivo</p>
+          <Button size="sm" variant="secondary" className="self-start" onClick={() => void testPush()}>
+            <BellRing className="size-4" aria-hidden />
+            Probar un aviso
+          </Button>
+          {testResult && <p className="text-sm text-slate-500">{testResult}</p>}
         </div>
       )}
 

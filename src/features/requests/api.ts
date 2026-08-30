@@ -1,4 +1,5 @@
 import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore'
+import type { FirestoreError } from 'firebase/firestore'
 
 import { db } from '@/lib/firebase'
 import type { JobRequest, RequestStatus } from '@/types/models'
@@ -12,8 +13,16 @@ export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
   cancelled: 'Cancelada',
 }
 
-/** Solicitudes donde el usuario participa, sea como cliente o profesional. */
-export function subscribeToRequests(uid: string, onChange: (requests: JobRequest[]) => void) {
+/**
+ * Solicitudes donde el usuario participa, sea como cliente o profesional.
+ * El `onError` no es opcional por capricho: sin él, un fallo de la consulta
+ * deja la pantalla en el spinner para siempre, sin decir nada.
+ */
+export function subscribeToRequests(
+  uid: string,
+  onChange: (requests: JobRequest[]) => void,
+  onError: (error: FirestoreError) => void,
+) {
   return onSnapshot(
     query(
       collection(db, 'requests'),
@@ -22,5 +31,6 @@ export function subscribeToRequests(uid: string, onChange: (requests: JobRequest
       limit(50),
     ),
     (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as JobRequest)),
+    onError,
   )
 }

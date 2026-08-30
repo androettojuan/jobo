@@ -6,11 +6,16 @@ import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAuth } from '@/features/auth/useAuth'
+import { NotificationsBell } from '@/features/notifications/NotificationsBell'
 import { getMyProfessional } from '@/features/professionals/profileApi'
 import { REQUEST_STATUS_LABELS, subscribeToRequests } from '@/features/requests/api'
 import { CATEGORIES_BY_ID } from '@/lib/categories'
 import { cn } from '@/lib/utils'
 import type { JobRequest, Professional } from '@/types/models'
+
+/** Todavía tiene trabajo por delante: no es historial. */
+const isOpen = (status: JobRequest['status']) =>
+  status === 'pending' || status === 'accepted' || status === 'in_progress'
 
 /** Panel del profesional: sus números y las solicitudes que recibe, por oficio. */
 export function ProfessionalDashboardPage() {
@@ -19,6 +24,7 @@ export function ProfessionalDashboardPage() {
   const [requests, setRequests] = useState<JobRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('')
+  const [requestsFailed, setRequestsFailed] = useState(false)
 
   useEffect(() => {
     if (!firebaseUser) return
@@ -37,7 +43,7 @@ export function ProfessionalDashboardPage() {
 
   useEffect(() => {
     if (!firebaseUser) return
-    return subscribeToRequests(firebaseUser.uid, setRequests)
+    return subscribeToRequests(firebaseUser.uid, setRequests, () => setRequestsFailed(true))
   }, [firebaseUser])
 
   // Solo las solicitudes donde soy el profesional: las que yo pedí van en "Solicitudes".
@@ -46,7 +52,13 @@ export function ProfessionalDashboardPage() {
     [requests, firebaseUser],
   )
 
-  const visible = filter ? received.filter((r) => r.categoryId === filter) : received
+  // Lo que espera respuesta o está en marcha va arriba; el historial, al final.
+  const visible = useMemo(() => {
+    const list = filter ? received.filter((r) => r.categoryId === filter) : received
+    return [...list].sort(
+      (a, b) => Number(isOpen(b.status)) - Number(isOpen(a.status)),
+    )
+  }, [received, filter])
 
   const pending = received.filter((r) => r.status === 'pending').length
   const active = received.filter((r) => ['accepted', 'in_progress'].includes(r.status)).length
@@ -81,12 +93,15 @@ export function ProfessionalDashboardPage() {
               : 'Tu perfil está en pausa: no aparecés en las búsquedas'}
           </p>
         </div>
-        <Link to="/perfil/profesional">
-          <Button size="sm" variant="secondary">
-            <Pencil className="size-4" aria-hidden />
-            Editar
-          </Button>
-        </Link>
+        <div className="flex shrink-0 items-center gap-1">
+          <Link to="/perfil/profesional">
+            <Button size="sm" variant="secondary">
+              <Pencil className="size-4" aria-hidden />
+              Editar
+            </Button>
+          </Link>
+          <NotificationsBell />
+        </div>
       </header>
 
       <ul className="grid grid-cols-2 gap-3">
@@ -146,6 +161,12 @@ export function ProfessionalDashboardPage() {
 
       <section>
         <h2 className="mb-3 font-semibold">Solicitudes recibidas</h2>
+
+        {requestsFailed && (
+          <p className="mb-3 text-sm text-red-600">
+            No pudimos cargar tus solicitudes. Revisá la conexión y volvé a entrar.
+          </p>
+        )}
 
         {visible.length === 0 ? (
           <EmptyState

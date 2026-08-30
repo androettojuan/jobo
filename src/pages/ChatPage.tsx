@@ -27,12 +27,16 @@ export function ChatPage() {
 
   useEffect(() => {
     if (!chatId) return
-    return subscribeToMessages(chatId, setMessages)
+    return subscribeToMessages(chatId, setMessages, () =>
+      setError('No pudimos cargar la conversación. Revisá la conexión.'),
+    )
   }, [chatId])
 
   useEffect(() => {
     if (!chatId) return
-    return subscribeToChat(chatId, setChat)
+    return subscribeToChat(chatId, setChat, () =>
+      setError('No pudimos cargar la conversación. Revisá la conexión.'),
+    )
   }, [chatId])
 
   useEffect(() => {

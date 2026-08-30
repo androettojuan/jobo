@@ -15,10 +15,20 @@ import { httpsCallable } from 'firebase/functions'
 
 import { db, functions } from '@/lib/firebase'
 import { uploadImage } from '@/lib/storage'
+import type { FirestoreError } from 'firebase/firestore'
+
 import type { Chat, Message } from '@/types/models'
 
-/** Suscripción en vivo a la lista de chats del usuario. */
-export function subscribeToChats(uid: string, onChange: (chats: Chat[]) => void) {
+/**
+ * Suscripción en vivo a la lista de chats del usuario.
+ * Igual que el resto de los listeners, el `onError` es obligatorio: sin él un
+ * fallo deja la pantalla girando el spinner sin decir nunca qué pasó.
+ */
+export function subscribeToChats(
+  uid: string,
+  onChange: (chats: Chat[]) => void,
+  onError: (error: FirestoreError) => void,
+) {
   return onSnapshot(
     query(
       collection(db, 'chats'),
@@ -27,21 +37,33 @@ export function subscribeToChats(uid: string, onChange: (chats: Chat[]) => void)
       limit(50),
     ),
     (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Chat)),
+    onError,
   )
 }
 
 /** Suscripción en vivo a los mensajes de un chat, del más viejo al más nuevo. */
 /** Suscripción al chat en sí (participantes, oficio, solicitud asociada). */
-export function subscribeToChat(chatId: string, onChange: (chat: Chat | null) => void) {
-  return onSnapshot(doc(db, 'chats', chatId), (snap) =>
-    onChange(snap.exists() ? ({ id: snap.id, ...snap.data() } as Chat) : null),
+export function subscribeToChat(
+  chatId: string,
+  onChange: (chat: Chat | null) => void,
+  onError: (error: FirestoreError) => void,
+) {
+  return onSnapshot(
+    doc(db, 'chats', chatId),
+    (snap) => onChange(snap.exists() ? ({ id: snap.id, ...snap.data() } as Chat) : null),
+    onError,
   )
 }
 
-export function subscribeToMessages(chatId: string, onChange: (messages: Message[]) => void) {
+export function subscribeToMessages(
+  chatId: string,
+  onChange: (messages: Message[]) => void,
+  onError: (error: FirestoreError) => void,
+) {
   return onSnapshot(
     query(collection(db, 'chats', chatId, 'messages'), orderBy('createdAt', 'asc'), limit(200)),
     (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Message)),
+    onError,
   )
 }
 

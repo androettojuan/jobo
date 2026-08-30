@@ -183,8 +183,8 @@ export function RequestsPage() {
       {error ? null : tab === 'mine' || !showReceived ? (
         <RequestList
           requests={mine}
-          emptyTitle="No pediste ningún presupuesto"
-          emptyDescription="Buscá un profesional y pedile un presupuesto: la solicitud va a aparecer acá."
+          emptyTitle="Todavía no contactaste a nadie"
+          emptyDescription="Buscá un profesional y contactalo: la consulta va a aparecer acá."
           emptyAction={
             <Link to="/" className="font-medium text-brand-600 hover:underline">
               Buscar profesionales
@@ -195,7 +195,7 @@ export function RequestsPage() {
         <RequestList
           requests={received}
           emptyTitle="Todavía no te pidieron nada"
-          emptyDescription="Cuando alguien de tu zona te pida un presupuesto lo vas a ver acá."
+          emptyDescription="Cuando alguien de tu zona te contacte lo vas a ver acá."
         />
       )}
     </div>

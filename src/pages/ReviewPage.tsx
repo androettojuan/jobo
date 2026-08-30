@@ -26,10 +26,17 @@ export function ReviewPage() {
 
   useEffect(() => {
     if (!requestId) return
-    return subscribeToRequest(requestId, (found) => {
-      setRequest(found)
-      setLoading(false)
-    })
+    return subscribeToRequest(
+      requestId,
+      (found) => {
+        setRequest(found)
+        setLoading(false)
+      },
+      () => {
+        setError('No pudimos cargar la solicitud. Revisá la conexión y volvé a entrar.')
+        setLoading(false)
+      },
+    )
   }, [requestId])
 
   useEffect(() => {

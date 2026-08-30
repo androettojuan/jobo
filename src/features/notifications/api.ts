@@ -66,11 +66,17 @@ export async function enablePushNotifications(uid: string) {
 }
 
 /** Mensajes que llegan con la app abierta: no los muestra el sistema. */
-export async function onForegroundMessage(handler: (title: string, body: string) => void) {
+export async function onForegroundMessage(
+  handler: (title: string, body: string, link: string) => void,
+) {
   if (!(await isSupported())) return () => {}
 
   return onMessage(getMessaging(app), (payload) => {
-    handler(payload.notification?.title ?? 'Jobo', payload.notification?.body ?? '')
+    handler(
+      payload.notification?.title ?? 'Jobo',
+      payload.notification?.body ?? '',
+      payload.data?.link ?? '/notificaciones',
+    )
   })
 }
 

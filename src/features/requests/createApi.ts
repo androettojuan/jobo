@@ -11,6 +11,7 @@ import {
 
 import { db } from '@/lib/firebase'
 import type { JobRequest, LocalityRef, Professional, RequestStatus, User } from '@/types/models'
+import type { FirestoreError } from 'firebase/firestore'
 
 export interface NewRequest {
   categoryId: string
@@ -75,9 +76,15 @@ export async function createRequest(client: User, professional: Professional, in
   return requestRef.id
 }
 
-export function subscribeToRequest(id: string, onChange: (request: JobRequest | null) => void) {
-  return onSnapshot(doc(db, 'requests', id), (snap) =>
-    onChange(snap.exists() ? ({ id: snap.id, ...snap.data() } as JobRequest) : null),
+export function subscribeToRequest(
+  id: string,
+  onChange: (request: JobRequest | null) => void,
+  onError: (error: FirestoreError) => void,
+) {
+  return onSnapshot(
+    doc(db, 'requests', id),
+    (snap) => onChange(snap.exists() ? ({ id: snap.id, ...snap.data() } as JobRequest) : null),
+    onError,
   )
 }
 

@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/useAuth'
 import { useUnreadChats } from '@/features/chat/useUnreadChats'
+import { ForegroundToast } from '@/features/notifications/ForegroundToast'
 import { InstallPrompt } from '@/features/pwa/InstallPrompt'
 import { UpdatePrompt } from '@/features/pwa/UpdatePrompt'
 import { cn } from '@/lib/utils'
@@ -45,6 +46,7 @@ export function AppLayout() {
         <Outlet />
       </main>
 
+      <ForegroundToast />
       <UpdatePrompt />
 
       {!immersive && (

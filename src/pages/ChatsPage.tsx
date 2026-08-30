@@ -16,13 +16,22 @@ export function ChatsPage() {
   const [chats, setChats] = useState<Chat[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!firebaseUser) return
-    return subscribeToChats(firebaseUser.uid, (list) => {
-      setChats(list)
-      setLoading(false)
-    })
+    return subscribeToChats(
+      firebaseUser.uid,
+      (list) => {
+        setChats(list)
+        setError('')
+        setLoading(false)
+      },
+      () => {
+        setError('No pudimos cargar tus chats. Revisá la conexión y volvé a entrar.')
+        setLoading(false)
+      },
+    )
   }, [firebaseUser])
 
   // Solo mostramos filtros de los oficios por los que realmente te escribieron.
@@ -42,7 +51,9 @@ export function ChatsPage() {
         <NotificationsBell />
       </div>
 
-      {availableCategories.length > 1 && (
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      {!error && availableCategories.length > 1 && (
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilter('')}
@@ -72,14 +83,14 @@ export function ChatsPage() {
         </div>
       )}
 
-      {visible.length === 0 ? (
+      {error ? null : visible.length === 0 ? (
         <EmptyState
           icon={MessagesSquare}
           title={filter ? 'Sin chats de este oficio' : 'No tenés conversaciones'}
           description={
             filter
               ? 'Probá sacando el filtro para ver el resto de tus conversaciones.'
-              : 'Cuando pidas o recibas un presupuesto se abre un chat con la otra persona.'
+              : 'Cuando contactes a alguien, o te contacten, se abre un chat.'
           }
         />
       ) : (

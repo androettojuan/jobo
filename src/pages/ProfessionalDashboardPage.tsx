@@ -175,7 +175,7 @@ export function ProfessionalDashboardPage() {
             description={
               filter
                 ? 'Probá sacando el filtro para ver el resto de tus solicitudes.'
-                : 'Cuando alguien de tu zona te pida un presupuesto lo vas a ver acá.'
+                : 'Cuando alguien de tu zona te contacte lo vas a ver acá.'
             }
           />
         ) : (

@@ -186,7 +186,7 @@ export function ProfessionalPage() {
         ) : (
           <Link to={`/profesional/${professional.uid}/solicitar`}>
             <Button size="lg" className="w-full">
-              Pedir presupuesto
+              Contactar
             </Button>
           </Link>
         )

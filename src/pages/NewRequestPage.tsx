@@ -86,7 +86,7 @@ export function NewRequestPage() {
       </Link>
 
       <header>
-        <h1 className="text-2xl font-bold">Pedir presupuesto</h1>
+        <h1 className="text-2xl font-bold">Contactar</h1>
         <p className="mt-1 text-sm text-slate-500">
           Se lo enviamos a {professional.displayName}. Va a poder responderte por chat.
         </p>
@@ -152,7 +152,7 @@ export function NewRequestPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <Button type="submit" size="lg" loading={sending}>
-        Enviar solicitud
+        Enviar consulta
       </Button>
 
       <p className="text-center text-xs text-slate-500">

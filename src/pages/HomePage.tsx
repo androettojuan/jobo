@@ -1,6 +1,6 @@
 import { Search, SearchX, X } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { EmptyState } from '@/components/EmptyState'
 import { Spinner } from '@/components/ui/Spinner'
@@ -19,8 +19,11 @@ export function HomePage() {
   const locality = useLocalityStore((s) => s.locality)
   const { counts, empty } = useCategoryCounts(locality?.id)
 
+  // `?categoria=` viene de los enlaces que apuntaban a la vieja pantalla de
+  // búsqueda; a partir de ahí el filtro se maneja acá.
+  const [params] = useSearchParams()
   const [term, setTerm] = useState('')
-  const [categoryId, setCategoryId] = useState('')
+  const [categoryId, setCategoryId] = useState(() => params.get('categoria') ?? '')
 
   // Buscar no saca al usuario de la home: mientras haya texto o un rubro
   // elegido, los resultados ocupan el lugar de la grilla de oficios.

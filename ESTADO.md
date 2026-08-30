@@ -68,10 +68,12 @@ tramo de registro, perfil y contadores también contra producción:
 - Denuncias desde perfiles y reseñas.
 - Fotos en solicitudes, en el chat, en el perfil profesional y avatar, con
   compresión en el navegador antes de subir (máx. 1600px, 5 MB).
-- **42 tests** (`npm test`, con los emuladores corriendo): 36 de las reglas de
+- **56 tests** (`npm test`, con los emuladores corriendo): 36 de las reglas de
   Firestore —transiciones de estado, acceso a chats y solicitudes ajenas,
   agregados que el cliente no puede tocar, reseñas, moderación y borrado del
-  historial de avisos— y 6 del filtro de búsqueda por texto.
+  historial de avisos—, 6 del filtro de búsqueda por texto y 14 de las
+  pantallas con Testing Library (solicitudes, búsqueda en la home y avisos),
+  que corren solos con `npm run test:ui` y no necesitan emuladores.
 - Identidad visual de la marca original (verde `#09bc8a`), iconos de la PWA,
   favicon y aviso de instalación/actualización.
 - Buscador por texto (nombre, título, descripción y oficio), tolerante a
@@ -111,8 +113,8 @@ Cuidado con los scripts de `scripts/`: sin `FIRESTORE_EMULATOR_HOST` y
 - Historial de reseñas propias y "mis calificaciones" en el perfil.
 - Ordenar resultados por cercanía real, no solo por rating.
 - Ampliar el catálogo de localidades más allá de Calamuchita.
-- Tests de los flujos de la app (hoy solo están cubiertas las reglas y el
-  filtro de búsqueda).
+- Tests de las pantallas que todavía no tienen: chat, detalle de solicitud,
+  perfil profesional y panel de admin.
 - La búsqueda por texto se hace en memoria sobre los primeros 100 activos de
   la localidad: alcanza para un pueblo, pero no escala a toda la provincia.
 - Notificar por email además de push, para quien no instala la PWA.

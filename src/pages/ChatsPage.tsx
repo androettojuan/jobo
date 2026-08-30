@@ -9,6 +9,7 @@ import { subscribeToChats } from '@/features/chat/api'
 import { CATEGORIES_BY_ID } from '@/lib/categories'
 import { cn } from '@/lib/utils'
 import type { Chat } from '@/types/models'
+import { NotificationsBell } from '@/features/notifications/NotificationsBell'
 
 export function ChatsPage() {
   const { firebaseUser } = useAuth()
@@ -36,7 +37,10 @@ export function ChatsPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-bold">Chats</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Chats</h1>
+        <NotificationsBell />
+      </div>
 
       {availableCategories.length > 1 && (
         <div className="flex flex-wrap gap-2">

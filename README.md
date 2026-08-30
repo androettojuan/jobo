@@ -47,8 +47,11 @@ Scripts:
 - `npm run dev` — servidor de desarrollo
 - `npm run build` — build de producción
 - `npm run typecheck` — chequeo de tipos
-- `npm test` — tests de las reglas de Firestore (requiere los emuladores)
-- `npm run seed` — carga oficios y localidades en Firestore
+- `npm test` — todos los tests: reglas de Firestore (requiere los emuladores)
+  y pantallas
+- `npm run test:ui` — solo los tests de pantallas, sin emuladores
+- `npm run seed` — carga oficios y localidades en Firestore (¡apunta a
+  producción si no se le pasa `FIRESTORE_EMULATOR_HOST`!)
 - `npm run emulators` — emuladores de Firebase
 - `npm run deploy:rules` — publica reglas e índices de Firestore y Storage
 

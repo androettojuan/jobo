@@ -2,6 +2,7 @@ import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messagi
 import {
   collection,
   doc,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
@@ -11,6 +12,7 @@ import {
   writeBatch,
   arrayUnion,
 } from 'firebase/firestore'
+import type { FirestoreError } from 'firebase/firestore'
 
 import { app, db } from '@/lib/firebase'
 import type { AppNotification } from '@/types/models'
@@ -72,13 +74,19 @@ export async function onForegroundMessage(handler: (title: string, body: string)
   })
 }
 
+/**
+ * El `onError` es obligatorio a propósito: sin él, un fallo del listener deja
+ * la pantalla en el spinner para siempre y sin explicación.
+ */
 export function subscribeToNotifications(
   uid: string,
   onChange: (notifications: AppNotification[]) => void,
+  onError: (error: FirestoreError) => void,
 ) {
   return onSnapshot(
     query(collection(db, 'users', uid, 'notifications'), orderBy('createdAt', 'desc'), limit(50)),
     (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as AppNotification)),
+    onError,
   )
 }
 
@@ -86,13 +94,20 @@ export function markNotificationRead(uid: string, notificationId: string) {
   return updateDoc(doc(db, 'users', uid, 'notifications', notificationId), { read: true })
 }
 
-/** Borra el historial de avisos del usuario. Los ids son los que tiene a la vista. */
-export async function clearNotifications(uid: string, notificationIds: string[]) {
-  if (notificationIds.length === 0) return
+/** Tope de operaciones por lote que admite Firestore. */
+const BATCH_LIMIT = 500
 
-  const batch = writeBatch(db)
-  for (const id of notificationIds) {
-    batch.delete(doc(db, 'users', uid, 'notifications', id))
+/**
+ * Vacía el historial de avisos. Consulta la colección en vez de borrar solo lo
+ * que la pantalla tiene a la vista (que llega hasta 50): si no, al usuario con
+ * más avisos la lista se le vuelve a llenar sola apenas termina.
+ */
+export async function clearNotifications(uid: string) {
+  const snap = await getDocs(collection(db, 'users', uid, 'notifications'))
+
+  for (let i = 0; i < snap.docs.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db)
+    for (const found of snap.docs.slice(i, i + BATCH_LIMIT)) batch.delete(found.ref)
+    await batch.commit()
   }
-  await batch.commit()
 }

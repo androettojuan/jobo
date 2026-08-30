@@ -9,6 +9,7 @@ import { REQUEST_STATUS_LABELS, subscribeToRequests } from '@/features/requests/
 import { CATEGORIES_BY_ID } from '@/lib/categories'
 import { cn } from '@/lib/utils'
 import type { JobRequest, RequestStatus } from '@/types/models'
+import { NotificationsBell } from '@/features/notifications/NotificationsBell'
 
 /** Lo que todavía tiene trabajo por delante; el resto es historial. */
 const OPEN_STATUSES: RequestStatus[] = ['pending', 'accepted', 'in_progress']
@@ -138,11 +139,14 @@ export function RequestsPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-bold">Solicitudes</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Solicitudes</h1>
+        <NotificationsBell />
+      </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {showReceived && (
+      {!error && showReceived && (
         <div className="flex gap-2">
           {(
             [
@@ -176,7 +180,7 @@ export function RequestsPage() {
         </div>
       )}
 
-      {tab === 'mine' || !showReceived ? (
+      {error ? null : tab === 'mine' || !showReceived ? (
         <RequestList
           requests={mine}
           emptyTitle="No pediste ningún presupuesto"

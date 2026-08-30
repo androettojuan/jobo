@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { filterByText, searchProfessionals } from './api'
 import type { Professional } from '@/types/models'
@@ -9,6 +9,10 @@ interface Options {
   localityId?: string
 }
 
+/** Identifica la consulta: el texto no entra, porque se filtra en memoria. */
+const queryKey = (categoryId?: string, localityId?: string) =>
+  `${categoryId ?? ''}|${localityId ?? ''}`
+
 /**
  * Profesionales que coinciden con el rubro elegido y/o el texto escrito.
  * La consulta a Firestore depende solo del rubro y la localidad; el texto se
@@ -17,46 +21,44 @@ interface Options {
  */
 export function useProfessionalSearch({ term, categoryId, localityId }: Options) {
   const [all, setAll] = useState<Professional[]>([])
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  // Consulta ya traída, para no repetirla en cada tecleo.
-  const loadedFor = useRef<string | null>(null)
+  /**
+   * Consulta cuyos resultados están en `all`. Es estado y no una ref para que
+   * la pantalla sepa, ya en el primer render, que todavía no hay datos: si no,
+   * alcanza a pintar "sin resultados" antes de que empiece la carga.
+   */
+  const [loadedKey, setLoadedKey] = useState<string | null>(null)
 
   const active = term.trim().length > 0 || Boolean(categoryId)
+  const key = queryKey(categoryId, localityId)
+  const ready = loadedKey === key
 
   useEffect(() => {
-    if (!active) return
-
-    const key = `${categoryId ?? ''}|${localityId ?? ''}`
-    if (loadedFor.current === key) return
-    loadedFor.current = key
+    if (!active || ready) return
 
     let cancelled = false
-    setAll([])
-    setLoading(true)
     setError('')
 
     searchProfessionals({ categoryId, localityId, max: 100 })
       .then((list) => {
-        if (!cancelled) setAll(list)
+        // La consulta solo se da por cargada al terminar: si se cancela a mitad
+        // de camino, el próximo intento tiene que volver a pedirla.
+        if (cancelled) return
+        setAll(list)
+        setLoadedKey(key)
       })
       .catch(() => {
-        if (cancelled) return
-        setError('No pudimos buscar ahora. Probá de nuevo.')
-        loadedFor.current = null // que el próximo intento reintente
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setError('No pudimos buscar ahora. Probá de nuevo.')
       })
 
     return () => {
       cancelled = true
     }
-  }, [active, categoryId, localityId])
+  }, [active, ready, key, categoryId, localityId])
 
   return {
-    results: active ? filterByText(all, term) : [],
-    loading: active && loading,
+    results: active && ready ? filterByText(all, term) : [],
+    loading: active && !ready && !error,
     error: active ? error : '',
   }
 }

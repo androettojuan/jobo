@@ -163,12 +163,12 @@ export function ProfessionalDashboardPage() {
         <h2 className="mb-3 font-semibold">Solicitudes recibidas</h2>
 
         {requestsFailed && (
-          <p className="mb-3 text-sm text-red-600">
+          <p className="text-sm text-red-600">
             No pudimos cargar tus solicitudes. Revisá la conexión y volvé a entrar.
           </p>
         )}
 
-        {visible.length === 0 ? (
+        {requestsFailed ? null : visible.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
             title={filter ? 'Nada por este oficio' : 'Todavía no te escribieron'}

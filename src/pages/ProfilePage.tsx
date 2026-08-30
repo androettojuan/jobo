@@ -10,6 +10,7 @@ import { updateUserProfile, uploadAvatar } from '@/features/auth/profileApi'
 import { useAuth } from '@/features/auth/useAuth'
 import { LOCALITIES, toLocalityRef } from '@/lib/localities'
 import type { LocalityRef } from '@/types/models'
+import { NotificationsBell } from '@/features/notifications/NotificationsBell'
 
 export function ProfilePage() {
   const { firebaseUser, profile, isAdmin, loading } = useAuth()
@@ -65,7 +66,10 @@ export function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <h1 className="text-2xl font-bold">Mi perfil</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Mi perfil</h1>
+        <NotificationsBell />
+      </div>
 
       <div className="flex items-center gap-3">
         <label className="relative cursor-pointer">

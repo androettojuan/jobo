@@ -3,7 +3,6 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/useAuth'
 import { useUnreadChats } from '@/features/chat/useUnreadChats'
-import { NotificationsBell } from '@/features/notifications/NotificationsBell'
 import { InstallPrompt } from '@/features/pwa/InstallPrompt'
 import { UpdatePrompt } from '@/features/pwa/UpdatePrompt'
 import { cn } from '@/lib/utils'
@@ -18,13 +17,6 @@ const BASE_TABS = [
 /** La pestaña de trabajo solo le sirve a quien ofrece servicios. */
 const WORK_TAB = { to: '/mi-trabajo', label: 'Mi trabajo', icon: Briefcase, end: false }
 
-/**
- * Pantallas donde el layout pone la campana por su cuenta, arriba a la
- * derecha. La home y "Mi trabajo" la ubican en su propio encabezado —tienen
- * algo más ahí y se pisarían—, y las subpantallas no la llevan.
- */
-const BELL_ROUTES = new Set(['/solicitudes', '/chats', '/perfil'])
-
 function Badge({ count }: { count: number }) {
   if (count === 0) return null
   return (
@@ -35,13 +27,12 @@ function Badge({ count }: { count: number }) {
 }
 
 export function AppLayout() {
-  const { firebaseUser, profile } = useAuth()
+  const { profile } = useAuth()
   const unreadChats = useUnreadChats()
   const { pathname } = useLocation()
 
   // El chat ocupa toda la pantalla: barra y encabezado estorban.
   const immersive = /^\/chats\/[^/]+$/.test(pathname)
-  const showBell = Boolean(firebaseUser) && BELL_ROUTES.has(pathname)
 
   const tabs = profile?.isProfessional
     ? [...BASE_TABS.slice(0, 2), WORK_TAB, ...BASE_TABS.slice(2)]
@@ -49,13 +40,7 @@ export function AppLayout() {
 
   return (
     <div className="mx-auto flex h-full max-w-2xl flex-col">
-      <main
-        className={cn(
-          'relative flex-1 overflow-y-auto',
-          immersive ? 'h-full' : 'safe-top pb-20',
-        )}
-      >
-        {showBell && <NotificationsBell className="absolute top-4 right-4 z-10" />}
+      <main className={cn('flex-1 overflow-y-auto', immersive ? 'h-full' : 'safe-top pb-20')}>
         {!immersive && <InstallPrompt />}
         <Outlet />
       </main>

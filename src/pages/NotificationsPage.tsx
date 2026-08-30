@@ -32,16 +32,25 @@ export function NotificationsPage() {
   const [pushState, setPushState] = useState<'idle' | 'working' | 'on' | 'failed'>('idle')
   const [failure, setFailure] = useState<PushFailure | null>(null)
   const [clearing, setClearing] = useState(false)
+  const [listError, setListError] = useState('')
   // Borrar no se deshace: el propio botón pide confirmación en un segundo
   // toque, así no hace falta un diálogo del navegador.
   const [confirmingClear, setConfirmingClear] = useState(false)
 
   useEffect(() => {
     if (!firebaseUser) return
-    return subscribeToNotifications(firebaseUser.uid, (list) => {
-      setNotifications(list)
-      setLoading(false)
-    })
+    return subscribeToNotifications(
+      firebaseUser.uid,
+      (list) => {
+        setNotifications(list)
+        setListError('')
+        setLoading(false)
+      },
+      () => {
+        setListError('No pudimos cargar tus avisos. Revisá la conexión y volvé a entrar.')
+        setLoading(false)
+      },
+    )
   }, [firebaseUser])
 
   // Tener el permiso del navegador no alcanza: sin token registrado el
@@ -90,10 +99,12 @@ export function NotificationsPage() {
     }
 
     setClearing(true)
-    await clearNotifications(
-      firebaseUser.uid,
-      notifications.map((n) => n.id),
-    ).catch(() => {})
+    try {
+      await clearNotifications(firebaseUser.uid)
+      setListError('')
+    } catch {
+      setListError('No pudimos borrar los avisos. Probá de nuevo.')
+    }
     setClearing(false)
     setConfirmingClear(false)
   }
@@ -137,6 +148,8 @@ export function NotificationsPage() {
           </Button>
         </div>
       )}
+
+      {listError && <p className="text-sm text-red-600">{listError}</p>}
 
       {notifications.length === 0 ? (
         <EmptyState

@@ -28,7 +28,9 @@ export function subscribeToRequests(
       collection(db, 'requests'),
       where('participantIds', 'array-contains', uid),
       orderBy('createdAt', 'desc'),
-      limit(50),
+      // La misma consulta alimenta las dos pestañas (lo que pedí y lo que me
+      // pidieron) y sus contadores, así que el tope se reparte entre ambas.
+      limit(200),
     ),
     (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as JobRequest)),
     onError,

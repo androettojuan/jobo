@@ -19,15 +19,28 @@ firebase.initializeApp({
   appId: '1:891114567956:web:038e5920310d3516e06a01',
 })
 
+// Sin esto, una versión nueva de este archivo se queda esperando a que se
+// cierren todas las pestañas: mientras tanto sigue atendiendo los push el
+// service worker viejo, que puede no entender el formato nuevo.
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
+
 const messaging = firebase.messaging()
 
+// Los push llegan solo con `data`: el título y el cuerpo vienen ahí. Si
+// vinieran en `notification`, el SDK dibujaría su propio aviso además de
+// este y se verían dos.
 messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification ?? {}
-  self.registration.showNotification(title ?? 'Jobo', {
-    body: body ?? '',
+  // `data` es el formato actual; `notification` queda como red de seguridad
+  // por si algún envío viejo sigue en camino.
+  const { title, body, link } = { ...payload.notification, ...payload.data }
+  self.registration.showNotification(title || 'Jobo', {
+    body: body || '',
     icon: '/pwa-192x192.png',
     badge: '/pwa-192x192.png',
-    data: { link: payload.data?.link ?? '/' },
+    // Un aviso por conversación: el nuevo reemplaza al anterior del mismo hilo.
+    tag: link || 'jobo',
+    data: { link: link || '/' },
   })
 })
 

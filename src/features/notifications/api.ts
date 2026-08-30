@@ -134,9 +134,10 @@ export async function onForegroundMessage(
   if (!(await isSupported())) return () => {}
 
   return onMessage(getMessaging(app), (payload) => {
+    // El servidor manda todo en `data`, para no duplicar el aviso.
     handler(
-      payload.notification?.title ?? 'Jobo',
-      payload.notification?.body ?? '',
+      payload.data?.title ?? payload.notification?.title ?? 'Jobo',
+      payload.data?.body ?? payload.notification?.body ?? '',
       payload.data?.link ?? '/notificaciones',
     )
   })

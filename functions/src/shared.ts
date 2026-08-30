@@ -79,17 +79,18 @@ export async function notify({
     return
   }
 
+  // Solo `data`, sin bloque `notification`: cuando el push trae `notification`
+  // el SDK lo muestra por su cuenta y el service worker lo muestra otra vez,
+  // y el aviso llega duplicado. Así lo dibuja un solo lado.
   const response = await messaging.sendEachForMulticast({
     tokens,
-    notification: { title, body },
-    data: { link, type },
+    data: { title, body, link, type },
     webpush: {
       // Sin urgencia alta, Android puede demorar o directamente descartar el
       // aviso cuando el navegador está en segundo plano y el ahorro de batería
       // aprieta. Para un chat, un aviso que llega mañana no sirve de nada.
       headers: { Urgency: 'high', TTL: '86400' },
       fcmOptions: { link: `${APP_URL}${link}` },
-      notification: { icon: `${APP_URL}/pwa-192x192.png` },
     },
   })
 

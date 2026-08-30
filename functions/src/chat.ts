@@ -32,6 +32,10 @@ export const onMessageCreated = onDocumentCreated(
           title: senderName,
           body: message.kind === 'image' ? 'Te envió una foto' : (message.text ?? ''),
           link: `/chats/${event.params.chatId}`,
+          // Al teléfono llega un push por mensaje, como en cualquier chat; el
+          // historial de la app guarda una sola entrada por conversación.
+          groupKey: `chat-${event.params.chatId}`,
+          inApp: { title: senderName, body: 'Te escribió un mensaje' },
         }),
       ),
     )

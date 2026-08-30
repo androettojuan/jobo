@@ -36,7 +36,9 @@ service cloud.firestore {
         // Solo el dueño puede marcarlas como leídas; crearlas es cosa del backend.
         allow update: if isSelf(uid)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
-        allow create, delete: if false;
+        allow create: if false;
+        // El dueño puede vaciar su historial de avisos.
+        allow delete: if isSelf(uid);
       }
 
       match /favorites/{professionalId} {

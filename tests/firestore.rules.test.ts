@@ -3,7 +3,7 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import {
@@ -362,6 +362,38 @@ describe('teléfono público', () => {
     // Lo sincroniza la Cloud Function desde users/{uid}, según phoneIsPublic.
     await assertFails(
       updateDoc(doc(db, 'professionals/profesional-1'), { publicPhone: '3546551234' }),
+    )
+  })
+})
+
+
+describe('notificaciones', () => {
+  beforeEach(async () => {
+    await seed((db) =>
+      setDoc(doc(db, `users/${CLIENT}/notifications/aviso-1`), {
+        type: 'message_received',
+        title: 'Ana',
+        body: 'Te escribió un mensaje',
+        link: '/chats/chat-1',
+        read: false,
+      }),
+    )
+  })
+
+  it('el dueño puede borrar sus avisos', async () => {
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertSucceeds(deleteDoc(doc(db, `users/${CLIENT}/notifications/aviso-1`)))
+  })
+
+  it('un tercero no puede borrar avisos ajenos', async () => {
+    const db = env.authenticatedContext(STRANGER).firestore()
+    await assertFails(deleteDoc(doc(db, `users/${CLIENT}/notifications/aviso-1`)))
+  })
+
+  it('el cliente no puede fabricarse un aviso', async () => {
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertFails(
+      setDoc(doc(db, `users/${CLIENT}/notifications/inventado`), { title: 'Falso', read: false }),
     )
   })
 })

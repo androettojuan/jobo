@@ -1,16 +1,15 @@
-import { Bell, ClipboardList, Home, MessageCircle, Search, User } from 'lucide-react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { ClipboardList, Home, MessageCircle, User } from 'lucide-react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/useAuth'
 import { useUnreadChats } from '@/features/chat/useUnreadChats'
-import { useUnreadNotifications } from '@/features/notifications/useUnreadCount'
+import { NotificationsBell } from '@/features/notifications/NotificationsBell'
 import { InstallPrompt } from '@/features/pwa/InstallPrompt'
 import { UpdatePrompt } from '@/features/pwa/UpdatePrompt'
 import { cn } from '@/lib/utils'
 
 const tabs = [
   { to: '/', label: 'Inicio', icon: Home, end: true },
-  { to: '/buscar', label: 'Buscar', icon: Search, end: false },
   { to: '/solicitudes', label: 'Solicitudes', icon: ClipboardList, end: false },
   { to: '/chats', label: 'Chats', icon: MessageCircle, end: false },
   { to: '/perfil', label: 'Perfil', icon: User, end: false },
@@ -28,26 +27,25 @@ function Badge({ count }: { count: number }) {
 export function AppLayout() {
   const { firebaseUser } = useAuth()
   const unreadChats = useUnreadChats()
-  const unreadNotifications = useUnreadNotifications()
   const { pathname } = useLocation()
 
   // El chat ocupa toda la pantalla: barra y encabezado estorban.
   const immersive = /^\/chats\/[^/]+$/.test(pathname)
+  // La home la pone en su propio encabezado, a la altura del logo; en la
+  // pantalla de avisos no tiene sentido llevar a donde ya estás.
+  const hideBell = pathname === '/' || pathname === '/notificaciones'
 
   return (
     <div className="mx-auto flex h-full max-w-2xl flex-col">
-      {!immersive && firebaseUser && (
-        <div className="safe-top flex justify-end px-4 pt-2">
-          <Link to="/notificaciones" className="relative p-2" aria-label="Notificaciones">
-            <Bell className="size-5" aria-hidden />
-            {unreadNotifications > 0 && (
-              <span className="absolute top-1 right-1 size-2 rounded-full bg-red-600" />
-            )}
-          </Link>
-        </div>
-      )}
-
-      <main className={cn('flex-1 overflow-y-auto', immersive ? 'h-full' : 'safe-top pb-20')}>
+      <main
+        className={cn(
+          'relative flex-1 overflow-y-auto',
+          immersive ? 'h-full' : 'safe-top pb-20',
+        )}
+      >
+        {!immersive && firebaseUser && !hideBell && (
+          <NotificationsBell className="absolute top-4 right-4 z-10" />
+        )}
         {!immersive && <InstallPrompt />}
         <Outlet />
       </main>

@@ -1,4 +1,4 @@
-import { Bell, BellRing } from 'lucide-react'
+import { Bell, BellRing, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -7,18 +7,34 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAuth } from '@/features/auth/useAuth'
 import {
+  clearNotifications,
   enablePushNotifications,
   markNotificationRead,
+  PushError,
   subscribeToNotifications,
 } from '@/features/notifications/api'
+import type { PushFailure } from '@/features/notifications/api'
 import { cn } from '@/lib/utils'
 import type { AppNotification } from '@/types/models'
+
+const FAILURE_MESSAGE: Record<PushFailure, string> = {
+  denied: 'El navegador bloqueó los avisos. Podés habilitarlos desde la configuración del sitio.',
+  unsupported:
+    'Este navegador no soporta avisos push. En iPhone hace falta instalar la app desde “Compartir → Agregar a inicio”.',
+  'no-vapid-key': 'Falta configurar la clave de notificaciones de la app.',
+  failed: 'No pudimos registrar este dispositivo. Recargá la página y probá de nuevo.',
+}
 
 export function NotificationsPage() {
   const { firebaseUser } = useAuth()
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [loading, setLoading] = useState(true)
-  const [pushState, setPushState] = useState<'idle' | 'working' | 'on' | 'blocked'>('idle')
+  const [pushState, setPushState] = useState<'idle' | 'working' | 'on' | 'failed'>('idle')
+  const [failure, setFailure] = useState<PushFailure | null>(null)
+  const [clearing, setClearing] = useState(false)
+  // Borrar no se deshace: el propio botón pide confirmación en un segundo
+  // toque, así no hace falta un diálogo del navegador.
+  const [confirmingClear, setConfirmingClear] = useState(false)
 
   useEffect(() => {
     if (!firebaseUser) return
@@ -28,24 +44,79 @@ export function NotificationsPage() {
     })
   }, [firebaseUser])
 
+  // Tener el permiso del navegador no alcanza: sin token registrado el
+  // servidor no tiene a dónde mandar el push, y el token puede faltar o haber
+  // caducado. Si el permiso ya está dado lo registramos en silencio, sin
+  // volver a preguntarle nada al usuario.
   useEffect(() => {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      setPushState('on')
+    if (!firebaseUser) return
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+
+    let cancelled = false
+    setPushState('working')
+    enablePushNotifications(firebaseUser.uid)
+      .then(() => {
+        if (!cancelled) setPushState('on')
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return
+        setPushState('failed')
+        setFailure(e instanceof PushError ? e.reason : 'failed')
+      })
+
+    return () => {
+      cancelled = true
     }
-  }, [])
+  }, [firebaseUser])
 
   async function enablePush() {
     if (!firebaseUser) return
     setPushState('working')
-    const token = await enablePushNotifications(firebaseUser.uid).catch(() => null)
-    setPushState(token ? 'on' : 'blocked')
+    try {
+      await enablePushNotifications(firebaseUser.uid)
+      setPushState('on')
+      setFailure(null)
+    } catch (e) {
+      setPushState('failed')
+      setFailure(e instanceof PushError ? e.reason : 'failed')
+    }
+  }
+
+  async function clearAll() {
+    if (!firebaseUser || notifications.length === 0) return
+    if (!confirmingClear) {
+      setConfirmingClear(true)
+      return
+    }
+
+    setClearing(true)
+    await clearNotifications(
+      firebaseUser.uid,
+      notifications.map((n) => n.id),
+    ).catch(() => {})
+    setClearing(false)
+    setConfirmingClear(false)
   }
 
   if (loading) return <Spinner />
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-bold">Notificaciones</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">Notificaciones</h1>
+        {notifications.length > 0 && (
+          <Button
+            variant={confirmingClear ? 'danger' : 'ghost'}
+            size="sm"
+            loading={clearing}
+            onClick={() => void clearAll()}
+            onBlur={() => setConfirmingClear(false)}
+          >
+            <Trash2 className="size-4" aria-hidden />
+            {confirmingClear ? 'Confirmar' : 'Limpiar'}
+          </Button>
+        )}
+      </div>
 
       {pushState !== 'on' && (
         <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
@@ -54,11 +125,7 @@ export function NotificationsPage() {
             Activá los avisos para saber cuando te escriben o te aceptan una solicitud, aunque
             tengas la app cerrada.
           </p>
-          {pushState === 'blocked' && (
-            <p className="text-sm text-amber-600">
-              El navegador bloqueó los avisos. Podés habilitarlos desde la configuración del sitio.
-            </p>
-          )}
+          {failure && <p className="text-sm text-amber-600">{FAILURE_MESSAGE[failure]}</p>}
           <Button
             size="sm"
             className="self-start"

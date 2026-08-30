@@ -23,6 +23,14 @@ interface NotifyParams {
   body: string
   /** Ruta interna a la que lleva el tap. */
   link: string
+  /**
+   * Agrupa el historial dentro de la app: con la misma clave, el aviso nuevo
+   * reemplaza al anterior en vez de acumular una entrada por evento. Los push
+   * al teléfono se mandan igual, uno por evento.
+   */
+  groupKey?: string
+  /** Texto del historial cuando conviene que diga algo distinto al push. */
+  inApp?: { title: string; body: string }
 }
 
 /**
@@ -30,17 +38,32 @@ interface NotifyParams {
  * app) y además la manda por push a todos los dispositivos registrados.
  * Los tokens que el servicio reporta como inválidos se limpian.
  */
-export async function notify({ uid, type, title, body, link }: NotifyParams) {
+export async function notify({
+  uid,
+  type,
+  title,
+  body,
+  link,
+  groupKey,
+  inApp,
+}: NotifyParams) {
   const userRef = db.doc(`users/${uid}`)
 
-  await userRef.collection('notifications').add({
+  const entry = {
     type,
-    title,
-    body,
+    title: inApp?.title ?? title,
+    body: inApp?.body ?? body,
     link,
     read: false,
     createdAt: FieldValue.serverTimestamp(),
-  })
+  }
+
+  const notifications = userRef.collection('notifications')
+  if (groupKey) {
+    await notifications.doc(groupKey).set(entry)
+  } else {
+    await notifications.add(entry)
+  }
 
   const snap = await userRef.get()
   const tokens: string[] = snap.get('fcmTokens') ?? []

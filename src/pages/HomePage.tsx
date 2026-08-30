@@ -7,26 +7,34 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useAuth } from '@/features/auth/useAuth'
 import { LocalityPicker } from '@/features/localities/LocalityPicker'
 import { useLocalityStore } from '@/features/localities/store'
+import { NotificationsBell } from '@/features/notifications/NotificationsBell'
 import { ProfessionalCard } from '@/features/professionals/components/ProfessionalCard'
 import { useCategoryCounts } from '@/features/professionals/useCategoryCounts'
 import { useProfessionalSearch } from '@/features/professionals/useProfessionalSearch'
-import { CATEGORIES, CATEGORY_GROUPS, categoryIcon } from '@/lib/categories'
+import { CATEGORIES, CATEGORIES_BY_ID, CATEGORY_GROUPS, categoryIcon } from '@/lib/categories'
 import { cn } from '@/lib/utils'
 
 export function HomePage() {
-  const { profile } = useAuth()
+  const { firebaseUser, profile } = useAuth()
   const locality = useLocalityStore((s) => s.locality)
   const { counts, empty } = useCategoryCounts(locality?.id)
-  const [term, setTerm] = useState('')
 
-  // Mientras se escribe, los resultados ocupan el lugar de los rubros: buscar
-  // no saca al usuario de la home.
-  const searching = term.trim().length > 0
-  const { results, loading, error } = useProfessionalSearch(term, locality?.id)
+  const [term, setTerm] = useState('')
+  const [categoryId, setCategoryId] = useState('')
+
+  // Buscar no saca al usuario de la home: mientras haya texto o un rubro
+  // elegido, los resultados ocupan el lugar de la grilla de oficios.
+  const searching = term.trim().length > 0 || categoryId !== ''
+  const { results, loading, error } = useProfessionalSearch({
+    term,
+    categoryId: categoryId || undefined,
+    localityId: locality?.id,
+  })
+  const category = categoryId ? CATEGORIES_BY_ID.get(categoryId) : undefined
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <header className="flex items-start justify-between gap-3">
+      <header className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm text-slate-500">
             {profile ? `Hola, ${profile.displayName.split(' ')[0]}` : 'Bienvenido a'}
@@ -35,7 +43,9 @@ export function HomePage() {
             <img src="/img/jobo-logo.png" alt="Jobo" className="h-8 w-auto" />
           </h1>
         </div>
-        {!profile && (
+        {firebaseUser ? (
+          <NotificationsBell className="shrink-0" />
+        ) : (
           <Link to="/login" className="shrink-0 text-sm font-medium text-brand-600 hover:underline">
             Iniciar sesión
           </Link>
@@ -57,7 +67,7 @@ export function HomePage() {
           aria-label="Buscar profesionales"
           className="h-12 w-full rounded-xl border border-slate-300 pr-11 pl-11 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 [&::-webkit-search-cancel-button]:hidden"
         />
-        {searching && (
+        {term && (
           <button
             type="button"
             onClick={() => setTerm('')}
@@ -71,6 +81,18 @@ export function HomePage() {
 
       {searching ? (
         <section>
+          {category && (
+            <button
+              type="button"
+              onClick={() => setCategoryId('')}
+              className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-brand-600 bg-brand-600 px-3 py-1.5 text-sm text-white"
+            >
+              {category.name}
+              <X className="size-4" aria-hidden />
+              <span className="sr-only">Quitar el filtro de rubro</span>
+            </button>
+          )}
+
           {loading && <Spinner />}
           {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -80,8 +102,8 @@ export function HomePage() {
               title="Sin resultados"
               description={
                 locality
-                  ? `Nadie coincide con “${term.trim()}” en ${locality.name}. Probá con otras palabras o cambiá de localidad.`
-                  : `Nadie coincide con “${term.trim()}”. Probá con otras palabras.`
+                  ? `No encontramos a nadie en ${locality.name}. Probá con otras palabras o cambiá de localidad.`
+                  : 'No encontramos a nadie. Probá con otras palabras.'
               }
             />
           )}
@@ -98,12 +120,6 @@ export function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link
-                to={`/buscar?q=${encodeURIComponent(term.trim())}`}
-                className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline"
-              >
-                Filtrar por rubro
-              </Link>
             </>
           )}
         </section>
@@ -122,22 +138,23 @@ export function HomePage() {
             <section key={group.id}>
               <h2 className="mb-3 text-lg font-semibold">{group.name}</h2>
               <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                {sorted.map((category) => {
-                  const Icon = categoryIcon(category.id)
-                  const count = counts[category.id] ?? 0
+                {sorted.map((item) => {
+                  const Icon = categoryIcon(item.id)
+                  const count = counts[item.id] ?? 0
                   const dim = !empty && count === 0
 
                   return (
-                    <li key={category.id}>
-                      <Link
-                        to={`/buscar?categoria=${category.id}`}
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => setCategoryId(item.id)}
                         className={cn(
-                          'flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 p-2 text-center transition-colors hover:border-brand-500 hover:bg-brand-50 dark:border-slate-800 dark:hover:bg-slate-900',
+                          'flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 p-2 text-center transition-colors hover:border-brand-500 hover:bg-brand-50 dark:border-slate-800 dark:hover:bg-slate-900',
                           dim && 'opacity-45',
                         )}
                       >
                         <Icon className="size-7 text-brand-600" aria-hidden />
-                        <span className="text-xs leading-tight font-medium">{category.name}</span>
+                        <span className="text-xs leading-tight font-medium">{item.name}</span>
                         {!empty && (
                           <span className="text-[10px] text-slate-500">
                             {count === 0
@@ -147,7 +164,7 @@ export function HomePage() {
                                 : `${count} disponibles`}
                           </span>
                         )}
-                      </Link>
+                      </button>
                     </li>
                   )
                 })}

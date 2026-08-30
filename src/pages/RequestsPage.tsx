@@ -34,7 +34,7 @@ export function RequestsPage() {
           title="No tenés solicitudes"
           description="Buscá un profesional y pedile un presupuesto: la solicitud va a aparecer acá."
           action={
-            <Link to="/buscar" className="font-medium text-brand-600 hover:underline">
+            <Link to="/" className="font-medium text-brand-600 hover:underline">
               Buscar profesionales
             </Link>
           }

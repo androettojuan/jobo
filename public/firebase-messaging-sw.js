@@ -7,8 +7,8 @@
  * está hardcodeada porque un service worker no lee variables de entorno; son
  * claves públicas de cliente, no secretos.
  */
-importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js')
-importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js')
+importScripts('https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js')
+importScripts('https://www.gstatic.com/firebasejs/12.18.0/firebase-messaging-compat.js')
 
 firebase.initializeApp({
   apiKey: 'AIzaSyC5ceT5X3lbBl3TA-dJEf9_iMcKMzoTGzk',

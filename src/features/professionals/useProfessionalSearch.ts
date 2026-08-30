@@ -3,25 +3,31 @@ import { useEffect, useRef, useState } from 'react'
 import { filterByText, searchProfessionals } from './api'
 import type { Professional } from '@/types/models'
 
+interface Options {
+  term: string
+  categoryId?: string
+  localityId?: string
+}
+
 /**
- * Búsqueda por texto sobre los profesionales de la localidad elegida.
- * Trae la lista una sola vez —recién cuando el usuario empieza a escribir— y
- * después filtra en memoria: para el volumen de un pueblo alcanza de sobra y
- * evita una lectura a Firestore por cada tecla.
+ * Profesionales que coinciden con el rubro elegido y/o el texto escrito.
+ * La consulta a Firestore depende solo del rubro y la localidad; el texto se
+ * filtra en memoria sobre lo ya traído, así escribir no cuesta una lectura
+ * por tecla. Para el volumen de un pueblo alcanza de sobra.
  */
-export function useProfessionalSearch(term: string, localityId?: string) {
+export function useProfessionalSearch({ term, categoryId, localityId }: Options) {
   const [all, setAll] = useState<Professional[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  // Localidad ya traída, para no repetir la consulta en cada tecleo.
+  // Consulta ya traída, para no repetirla en cada tecleo.
   const loadedFor = useRef<string | null>(null)
 
-  const active = term.trim().length > 0
+  const active = term.trim().length > 0 || Boolean(categoryId)
 
   useEffect(() => {
     if (!active) return
 
-    const key = localityId ?? ''
+    const key = `${categoryId ?? ''}|${localityId ?? ''}`
     if (loadedFor.current === key) return
     loadedFor.current = key
 
@@ -30,7 +36,7 @@ export function useProfessionalSearch(term: string, localityId?: string) {
     setLoading(true)
     setError('')
 
-    searchProfessionals({ localityId, max: 100 })
+    searchProfessionals({ categoryId, localityId, max: 100 })
       .then((list) => {
         if (!cancelled) setAll(list)
       })
@@ -46,7 +52,7 @@ export function useProfessionalSearch(term: string, localityId?: string) {
     return () => {
       cancelled = true
     }
-  }, [active, localityId])
+  }, [active, categoryId, localityId])
 
   return {
     results: active ? filterByText(all, term) : [],

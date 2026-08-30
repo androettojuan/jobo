@@ -79,7 +79,7 @@ export function ProfessionalPage() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <Link to="/buscar" className="flex items-center gap-1 text-sm text-slate-500">
+      <Link to="/" className="flex items-center gap-1 text-sm text-slate-500">
         <ArrowLeft className="size-4" aria-hidden /> Volver
       </Link>
 

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { AdminCategoriesPage } from '@/pages/admin/AdminCategoriesPage'
 import { AdminLayout } from '@/pages/admin/AdminLayout'
@@ -20,7 +20,6 @@ import { RegisterPage } from '@/pages/RegisterPage'
 import { RequestDetailPage } from '@/pages/RequestDetailPage'
 import { RequestsPage } from '@/pages/RequestsPage'
 import { ReviewPage } from '@/pages/ReviewPage'
-import { SearchPage } from '@/pages/SearchPage'
 
 import { AdminRoute } from './AdminRoute'
 import { AppLayout } from './AppLayout'
@@ -34,7 +33,8 @@ export const router = createBrowserRouter([
     children: [
       // Públicas: se puede buscar y ver profesionales sin cuenta.
       { path: '/', element: <HomePage /> },
-      { path: '/buscar', element: <SearchPage /> },
+      // Buscar vive en la home; la ruta queda por los enlaces ya repartidos.
+      { path: '/buscar', element: <Navigate to="/" replace /> },
       { path: '/profesional/:uid', element: <ProfessionalPage /> },
       // Privadas: todo lo que implica identidad.
       {

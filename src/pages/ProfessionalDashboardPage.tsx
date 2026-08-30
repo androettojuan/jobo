@@ -130,7 +130,7 @@ export function ProfessionalDashboardPage() {
       </ul>
 
       {professional.categoryIds.length > 1 && (
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilter('')}
             className={cn(

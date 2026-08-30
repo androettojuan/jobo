@@ -39,7 +39,7 @@ export function ChatsPage() {
       <h1 className="text-2xl font-bold">Chats</h1>
 
       {availableCategories.length > 1 && (
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilter('')}
             className={cn(

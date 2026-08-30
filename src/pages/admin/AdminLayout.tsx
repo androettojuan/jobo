@@ -19,7 +19,7 @@ export function AdminLayout() {
 
       <h1 className="text-2xl font-bold">Administración</h1>
 
-      <nav className="-mx-4 flex gap-2 overflow-x-auto px-4">
+      <nav className="flex flex-wrap gap-2">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}

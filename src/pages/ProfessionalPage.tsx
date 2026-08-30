@@ -166,10 +166,10 @@ export function ProfessionalPage() {
       {professional.photos.length > 0 && (
         <section>
           <h2 className="mb-2 font-semibold">Trabajos</h2>
-          <ul className="-mx-4 flex gap-2 overflow-x-auto px-4">
+          <ul className="grid grid-cols-3 gap-2">
             {professional.photos.map((url) => (
               <li key={url}>
-                <img src={url} alt="" className="size-32 rounded-xl object-cover" />
+                <img src={url} alt="" className="aspect-square w-full rounded-xl object-cover" />
               </li>
             ))}
           </ul>

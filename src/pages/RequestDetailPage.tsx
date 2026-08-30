@@ -97,14 +97,14 @@ export function RequestDetailPage() {
       </p>
 
       {request.photos.length > 0 && (
-        <ul className="-mx-4 flex gap-2 overflow-x-auto px-4">
+        <ul className="grid grid-cols-3 gap-2">
           {request.photos.map((url) => (
             <li key={url}>
               <a href={url} target="_blank" rel="noreferrer">
                 <img
                   src={url}
                   alt="Foto de la solicitud"
-                  className="size-32 rounded-xl object-cover"
+                  className="aspect-square w-full rounded-xl object-cover"
                 />
               </a>
             </li>

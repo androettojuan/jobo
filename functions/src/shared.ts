@@ -84,8 +84,12 @@ export async function notify({
     notification: { title, body },
     data: { link, type },
     webpush: {
+      // Sin urgencia alta, Android puede demorar o directamente descartar el
+      // aviso cuando el navegador está en segundo plano y el ahorro de batería
+      // aprieta. Para un chat, un aviso que llega mañana no sirve de nada.
+      headers: { Urgency: 'high', TTL: '86400' },
       fcmOptions: { link: `${APP_URL}${link}` },
-      notification: { icon: '/pwa-192x192.png' },
+      notification: { icon: `${APP_URL}/pwa-192x192.png` },
     },
   })
 

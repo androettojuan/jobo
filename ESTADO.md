@@ -97,6 +97,9 @@ tramo de registro, perfil y contadores también contra producción:
 - Las conversaciones de trabajos ya cerrados se pueden eliminar a mano desde la
   casilla. El borrado es de cada uno (`chats.hiddenFor`): sacarla de tu lista no
   se la saca al otro, y si te vuelve a escribir reaparece. Nunca se borra sola.
+  El botón aparece según `chats.requestStatus`, que copia el estado de la
+  solicitud; los chats creados antes de que ese campo existiera se rellenaron
+  con `scripts/backfill-chat-status.mjs`.
 - Buscador por texto (nombre, título, descripción y oficio), tolerante a
   acentos y mayúsculas.
 - El teléfono marcado como público se muestra en la ficha; lo sincroniza una

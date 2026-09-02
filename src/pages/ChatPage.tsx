@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
+import { PhotoInput } from '@/components/ui/PhotoInput'
 import { MessagesSkeleton } from '@/components/ui/skeletons'
 import {
   markChatRead,
@@ -181,23 +182,14 @@ export function ChatPage() {
         onSubmit={onSubmit}
         className="safe-bottom flex gap-2 border-t border-slate-200 p-3 dark:border-slate-800"
       >
-        <label
-          className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-slate-300 text-slate-500 dark:border-slate-700"
+        <PhotoInput
           aria-label="Enviar una foto"
+          disabled={sending}
+          onPick={(file) => void onPhoto(file)}
+          className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-slate-300 text-slate-500 dark:border-slate-700"
         >
           <ImagePlus className="size-5" aria-hidden />
-          <input
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            disabled={sending}
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) void onPhoto(file)
-              e.target.value = ''
-            }}
-          />
-        </label>
+        </PhotoInput>
 
         <input
           value={text}

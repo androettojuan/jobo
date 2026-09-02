@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { PhotoInput } from '@/components/ui/PhotoInput'
 import { FormSkeleton } from '@/components/ui/skeletons'
 import { logout } from '@/features/auth/api'
 import { updateUserProfile, uploadAvatar } from '@/features/auth/profileApi'
@@ -73,7 +74,11 @@ export function ProfilePage() {
       </div>
 
       <div className="flex items-center gap-3">
-        <label className="relative cursor-pointer">
+        <PhotoInput
+          aria-label="Cambiar mi foto"
+          onPick={(file) => void onAvatar(file)}
+          className="relative cursor-pointer"
+        >
           {profile?.photoURL ? (
             <img src={profile.photoURL} alt="" className="size-16 rounded-full object-cover" />
           ) : (
@@ -84,17 +89,7 @@ export function ProfilePage() {
           <span className="absolute -right-1 -bottom-1 grid size-7 place-items-center rounded-full bg-brand-600 text-white">
             <Camera className="size-3.5" aria-hidden />
           </span>
-          <input
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) void onAvatar(file)
-              e.target.value = ''
-            }}
-          />
-        </label>
+        </PhotoInput>
         <div className="min-w-0">
           <p className="truncate font-medium">{profile?.displayName}</p>
           <p className="truncate text-sm text-slate-500">{profile?.email}</p>

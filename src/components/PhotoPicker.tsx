@@ -1,6 +1,7 @@
 import { ImagePlus, X } from 'lucide-react'
 import { useState } from 'react'
 
+import { PhotoInput } from '@/components/ui/PhotoInput'
 import { uploadImage } from '@/lib/storage'
 
 interface PhotoPickerProps {
@@ -60,7 +61,12 @@ export function PhotoPicker({
 
         {photos.length < max && (
           <li>
-            <label className="grid size-20 cursor-pointer place-items-center rounded-xl border border-dashed border-slate-300 text-slate-400 dark:border-slate-700">
+            <PhotoInput
+              aria-label="Agregar una foto"
+              disabled={uploading}
+              onPick={(file) => void add(file)}
+              className="grid size-20 cursor-pointer place-items-center rounded-xl border border-dashed border-slate-300 text-slate-400 dark:border-slate-700"
+            >
               {uploading ? (
                 <span
                   aria-label="Subiendo"
@@ -69,18 +75,7 @@ export function PhotoPicker({
               ) : (
                 <ImagePlus className="size-5" aria-hidden />
               )}
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                disabled={uploading}
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) void add(file)
-                  e.target.value = ''
-                }}
-              />
-            </label>
+            </PhotoInput>
           </li>
         )}
       </ul>

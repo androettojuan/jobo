@@ -1,3 +1,4 @@
+import { isNative } from '@/lib/platform'
 import type { Locality, LocalityRef } from '@/types/models'
 
 /**
@@ -88,39 +89,71 @@ function distanceKm(aLat: number, aLng: number, bLat: number, bLng: number) {
   return 2 * R * Math.asin(Math.sqrt(h))
 }
 
+/** Error que la pantalla muestra tal cual cuando no se pudo ubicar a nadie. */
+const SIN_UBICACION = 'No pudimos acceder a tu ubicación. Elegí tu localidad a mano.'
+
 /**
- * Pide la ubicación al navegador y devuelve la localidad más cercana del
+ * Las coordenadas del dispositivo, por el camino que corresponda.
+ *
+ * En la web las pide el navegador. Adentro del contenedor nativo hace falta el
+ * plugin: `navigator.geolocation` existe en el WebView, pero el permiso lo
+ * concede el sistema operativo, no la página, y sin plugin nadie lo pide.
+ */
+async function getCoords() {
+  if (isNative) {
+    const { Geolocation } = await import('@capacitor/geolocation')
+    // Alcanza la ubicación aproximada: solo se usa para adivinar el pueblo, y
+    // pedir la precisa obliga a justificarla ante Google Play.
+    const { coords } = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: false,
+      timeout: 10_000,
+      maximumAge: 5 * 60_000,
+    })
+    return coords
+  }
+
+  if (!('geolocation' in navigator)) {
+    throw new Error('Tu dispositivo no permite detectar la ubicación.')
+  }
+
+  const position = await new Promise<GeolocationPosition>((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      timeout: 10_000,
+      maximumAge: 5 * 60_000,
+    }),
+  )
+  return position.coords
+}
+
+/**
+ * Pide la ubicación al dispositivo y devuelve la localidad más cercana del
  * catálogo. Nunca guardamos las coordenadas: solo se usan acá para adivinar
  * el pueblo, y el usuario siempre puede corregirlo a mano.
  */
-export function detectLocality(maxKm = 60): Promise<Locality | null> {
-  return new Promise((resolve, reject) => {
-    if (!('geolocation' in navigator)) {
-      reject(new Error('Tu dispositivo no permite detectar la ubicación.'))
-      return
-    }
+export async function detectLocality(maxKm = 60): Promise<Locality | null> {
+  let coords: { latitude: number; longitude: number }
+  try {
+    coords = await getCoords()
+  } catch (cause) {
+    // El mensaje del navegador o del plugin no le dice nada a nadie; lo que
+    // importa es que se puede seguir eligiendo el pueblo a mano.
+    throw new Error(SIN_UBICACION, { cause })
+  }
 
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        loadLocalities()
-          .then((catalog) => {
-            let best: Locality | null = null
-            let bestKm = Infinity
-
-            for (const locality of catalog) {
-              const km = distanceKm(coords.latitude, coords.longitude, locality.lat, locality.lng)
-              if (km < bestKm) {
-                bestKm = km
-                best = locality
-              }
-            }
-
-            resolve(bestKm <= maxKm ? best : null)
-          })
-          .catch(() => reject(new Error('No pudimos cargar el listado de localidades.')))
-      },
-      () => reject(new Error('No pudimos acceder a tu ubicación. Elegí tu localidad a mano.')),
-      { timeout: 10_000, maximumAge: 5 * 60_000 },
-    )
+  const catalog = await loadLocalities().catch(() => {
+    throw new Error('No pudimos cargar el listado de localidades.')
   })
+
+  let best: Locality | null = null
+  let bestKm = Infinity
+
+  for (const locality of catalog) {
+    const km = distanceKm(coords.latitude, coords.longitude, locality.lat, locality.lng)
+    if (km < bestKm) {
+      bestKm = km
+      best = locality
+    }
+  }
+
+  return bestKm <= maxKm ? best : null
 }

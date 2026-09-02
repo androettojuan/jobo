@@ -1,27 +1,11 @@
 import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth'
 import { doc, onSnapshot } from 'firebase/firestore'
-import { createContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import { auth, db } from '@/lib/firebase'
 import type { User } from '@/types/models'
 
-export interface AuthState {
-  /** Usuario de Firebase Auth (credenciales). */
-  firebaseUser: FirebaseUser | null
-  /** Documento users/{uid} (perfil de la app). null si todavía no se creó. */
-  profile: User | null
-  /** Custom claim `admin` del token: habilita el panel de administración. */
-  isAdmin: boolean
-  /** false una vez que sabemos si hay sesión y tenemos el perfil. */
-  loading: boolean
-}
-
-export const AuthContext = createContext<AuthState>({
-  firebaseUser: null,
-  profile: null,
-  isAdmin: false,
-  loading: true,
-})
+import { AuthContext } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)

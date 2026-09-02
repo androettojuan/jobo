@@ -48,6 +48,8 @@ export async function createRequest(client: User, professional: Professional, in
     lastMessageAt: serverTimestamp(),
     lastMessageSenderId: client.uid,
     unreadCount: { [client.uid]: 0, [professional.uid]: 1 },
+    requestStatus: 'pending' satisfies RequestStatus,
+    hiddenFor: [],
     createdAt: serverTimestamp(),
   })
 
@@ -113,7 +115,7 @@ const TRANSITIONS: Record<
 
 export function allowedTransitions(request: JobRequest, uid: string) {
   const role = request.clientId === uid ? 'client' : 'professional'
-  return TRANSITIONS[request.status].filter((t) => t.by === 'any' || t.by === role).map((t) => t.to)
+  return TRANSITIONS[request.status].flatMap((t) => (t.by === 'any' || t.by === role ? [t.to] : []))
 }
 
 export async function updateRequestStatus(request: JobRequest, uid: string, status: RequestStatus) {

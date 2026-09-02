@@ -11,9 +11,8 @@ let emit: (requests: JobRequest[]) => void
 let fail: () => void
 
 vi.mock('@/features/requests/api', async () => {
-  const actual = await vi.importActual<typeof import('@/features/requests/api')>(
-    '@/features/requests/api',
-  )
+  const actual =
+    await vi.importActual<typeof import('@/features/requests/api')>('@/features/requests/api')
   return {
     ...actual,
     subscribeToRequests: (
@@ -91,7 +90,9 @@ describe('pantalla de solicitudes', () => {
     // Una abierta de cada lado; las cerradas no suman.
     const pedi = await screen.findByRole('button', { name: /Pedí/ })
     expect(within(pedi).getByText('1')).toBeInTheDocument()
-    expect(within(screen.getByRole('button', { name: /Me pidieron/ })).getByText('1')).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('button', { name: /Me pidieron/ })).getByText('1'),
+    ).toBeInTheDocument()
   })
 
   it('deja lo cerrado plegado y fuera del camino', async () => {

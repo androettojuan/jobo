@@ -18,6 +18,9 @@ interface ChipGroupProps {
 /** Selección múltiple con chips: más cómoda que un <select multiple> en el celular. */
 export function ChipGroup({ label, hint, options, selected, onToggle, max }: ChipGroupProps) {
   const full = max !== undefined && selected.length >= max
+  // Set y no `selected.includes`: el chequeo corre una vez por chip y con
+  // 32 oficios el array se recorría entero en cada uno.
+  const selectedIds = new Set(selected)
 
   return (
     <fieldset className="flex flex-col gap-2">
@@ -25,7 +28,7 @@ export function ChipGroup({ label, hint, options, selected, onToggle, max }: Chi
       {hint && <p className="text-xs text-slate-500">{hint}</p>}
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
-          const active = selected.includes(option.id)
+          const active = selectedIds.has(option.id)
           const disabled = full && !active
 
           return (

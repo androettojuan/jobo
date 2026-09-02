@@ -37,7 +37,11 @@ export function PushDiagnostics() {
         }
       }
 
-      const sw = registration.active ? 'activo' : registration.installing ? 'instalando' : 'inactivo'
+      const sw = registration.active
+        ? 'activo'
+        : registration.installing
+          ? 'instalando'
+          : 'inactivo'
 
       // La suscripción es lo que el navegador realmente tiene con el servicio
       // de push. Sin ella no llega nada, por más token que haya en Firestore.

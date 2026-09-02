@@ -16,7 +16,10 @@ export function NotificationsBell({ className }: { className?: string }) {
     <Link
       to="/notificaciones"
       aria-label={unread > 0 ? `Notificaciones (${unread} sin leer)` : 'Notificaciones'}
-      className={cn('relative shrink-0 rounded-full p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800', className)}
+      className={cn(
+        'relative shrink-0 rounded-full p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+        className,
+      )}
     >
       <Bell className="size-6" aria-hidden />
       {unread > 0 && (

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { AvatarListSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/features/auth/useAuth'
 import {
   clearNotifications,
@@ -122,7 +122,7 @@ export function NotificationsPage() {
     setConfirmingClear(false)
   }
 
-  if (loading) return <Spinner />
+  if (loading) return <AvatarListSkeleton />
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -165,7 +165,12 @@ export function NotificationsPage() {
       {pushState === 'on' && (
         <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
           <p className="text-sm font-medium">Los avisos están activos en este dispositivo</p>
-          <Button size="sm" variant="secondary" className="self-start" onClick={() => void testPush()}>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="self-start"
+            onClick={() => void testPush()}
+          >
             <BellRing className="size-4" aria-hidden />
             Probar un aviso
           </Button>

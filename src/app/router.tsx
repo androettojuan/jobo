@@ -22,15 +22,19 @@ import { RequestsPage } from '@/pages/RequestsPage'
 import { ReviewPage } from '@/pages/ReviewPage'
 
 import { AdminRoute } from './AdminRoute'
+import { RouteError } from './RouteError'
 import { RedirectToHome } from './RedirectToHome'
 import { AppLayout } from './AppLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 
 export const router = createBrowserRouter([
-  { path: '/login', element: <LoginPage /> },
-  { path: '/registro', element: <RegisterPage /> },
+  { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
+  { path: '/registro', element: <RegisterPage />, errorElement: <RouteError /> },
   {
     element: <AppLayout />,
+    // Cualquier error de render dentro de la app cae acá y no en el cartel
+    // por defecto de React Router.
+    errorElement: <RouteError />,
     children: [
       // Públicas: se puede buscar y ver profesionales sin cuenta.
       { path: '/', element: <HomePage /> },

@@ -6,7 +6,7 @@ import { PhotoPicker } from '@/components/PhotoPicker'
 import { Button } from '@/components/ui/Button'
 import { ChipGroup } from '@/components/ui/ChipGroup'
 import { Input } from '@/components/ui/Input'
-import { Spinner } from '@/components/ui/Spinner'
+import { FormSkeleton } from '@/components/ui/skeletons'
 import { Textarea } from '@/components/ui/Textarea'
 import { useAuth } from '@/features/auth/useAuth'
 import {
@@ -143,7 +143,7 @@ export function ProfessionalEditPage() {
     }
   }
 
-  if (loading) return <Spinner />
+  if (loading) return <FormSkeleton fields={6} />
 
   const categoryOptions = [
     ...CATEGORIES.map((c) => ({ id: c.id, name: c.name })),
@@ -236,10 +236,9 @@ export function ProfessionalEditPage() {
       <ChipGroup
         label="¿A qué otras localidades vas?"
         hint="Tu localidad ya está incluida. Marcá las demás donde estés dispuesto a trabajar."
-        options={LOCALITIES.filter((l) => l.id !== draft.locality?.id).map((l) => ({
-          id: l.id,
-          name: l.name,
-        }))}
+        options={LOCALITIES.flatMap((l) =>
+          l.id === draft.locality?.id ? [] : [{ id: l.id, name: l.name }],
+        )}
         selected={draft.serviceAreaIds}
         onToggle={(id) => toggle('serviceAreaIds', id)}
       />

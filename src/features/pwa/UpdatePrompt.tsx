@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 
 import { Button } from '@/components/ui/Button'
@@ -16,23 +17,32 @@ const CHECK_EVERY_MS = 60 * 60 * 1000
  * que la app vuelve al frente.
  */
 export function UpdatePrompt() {
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
+
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegisteredSW(_url, registration) {
-      if (!registration) return
-
-      const check = () => {
-        if (document.visibilityState === 'visible') void registration.update()
-      }
-
-      const timer = setInterval(check, CHECK_EVERY_MS)
-      document.addEventListener('visibilitychange', check)
-      // No hay desmontaje que valga: el componente vive mientras la app.
-      void timer
+    onRegisteredSW(_url, reg) {
+      setRegistration(reg ?? null)
     },
   })
+
+  useEffect(() => {
+    if (!registration) return
+
+    const check = () => {
+      if (document.visibilityState === 'visible') void registration.update()
+    }
+
+    const timer = setInterval(check, CHECK_EVERY_MS)
+    document.addEventListener('visibilitychange', check)
+
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', check)
+    }
+  }, [registration])
 
   if (!needRefresh) return null
 

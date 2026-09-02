@@ -6,8 +6,7 @@ import type { Professional } from '@/types/models'
 
 export function ProfessionalCard({ professional }: { professional: Professional }) {
   const categories = professional.categoryIds
-    .map((id) => CATEGORIES_BY_ID.get(id)?.name)
-    .filter(Boolean)
+    .flatMap((id) => CATEGORIES_BY_ID.get(id)?.name ?? [])
     .join(' · ')
 
   return (

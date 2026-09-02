@@ -75,7 +75,17 @@ tramo de registro, perfil y contadores también contra producción:
   pantallas con Testing Library (solicitudes, búsqueda en la home y avisos),
   que corren solos con `npm run test:ui` y no necesitan emuladores.
 - Identidad visual de la marca original (verde `#09bc8a`), iconos de la PWA,
-  favicon y aviso de instalación/actualización.
+  favicon y aviso de instalación/actualización. El logotipo y la "J" de los
+  iconos son SVG vectoriales (`public/img/jobo-logo.svg` y `public/favicon.svg`):
+  se trazaron de los PNG chicos que había, sin cambiar el dibujo, así que ya no
+  se ven borrosos en pantallas densas. Los PNG de la PWA salen de `favicon.svg`.
+- Mientras carga, cada pantalla muestra su propio esqueleto gris con la forma
+  del contenido que viene (`src/components/ui/skeletons.tsx`), en vez del
+  spinner genérico. El spinner sigue vivo solo en los guardas de ruta, donde
+  todavía no se sabe qué pantalla se va a dibujar.
+- Las conversaciones de trabajos ya cerrados se pueden eliminar a mano desde la
+  casilla. El borrado es de cada uno (`chats.hiddenFor`): sacarla de tu lista no
+  se la saca al otro, y si te vuelve a escribir reaparece. Nunca se borra sola.
 - Buscador por texto (nombre, título, descripción y oficio), tolerante a
   acentos y mayúsculas.
 - El teléfono marcado como público se muestra en la ficha; lo sincroniza una
@@ -94,6 +104,16 @@ tramo de registro, perfil y contadores también contra producción:
   panel con lo que solo se puede mirar desde el propio dispositivo: permiso,
   service worker, suscripción push y si el token de ese equipo está guardado
   en la cuenta.
+
+## Salud del código
+
+`AGENTS.md` fija la regla: toda tarea que toque código cierra con
+`npx react-doctor@latest --verbose src` en verde. El 2 de septiembre de 2026 se
+pasó de **54/100 con 16 hallazgos** a **100/100**: error boundary en las rutas
+raíz, el timer de actualización del service worker con su cleanup, el contexto
+de auth fuera del archivo del provider, y las tres pantallas más enredadas
+(home, panel del profesional y ficha pública) partidas en componentes bajo
+`src/features/*/components/`.
 
 ## Pendiente para el próximo tramo
 
@@ -145,14 +165,24 @@ Cuidado con los scripts de `scripts/`: sin `FIRESTORE_EMULATOR_HOST` y
   hoy quedan con el valor que tenían al crearse la conversación.
 - Historial de reseñas propias y "mis calificaciones" en el perfil.
 - Ordenar resultados por cercanía real, no solo por rating.
-- Ampliar el catálogo de localidades más allá de Calamuchita.
+- Ampliar el catálogo de localidades más allá de Calamuchita. Ya está resuelto
+  de dónde sacarlas: la **API Georef** del Estado (`apis.datos.gob.ar/georef`,
+  pública, gratuita y sin credenciales, sobre datos de INDEC, IGN y BAHRA)
+  devuelve las 4037 localidades del país en el mismo formato que usa la app.
+  `scripts/fetch-localities.mjs` las baja y las deja listas. Falta decidir dos
+  cosas antes de apretar el gatillo: el archivo pasa de 8 a 4037 entradas
+  (466 KB, 88 KB comprimido) y conviene cargarlo aparte del bundle o filtrarlo
+  por provincia; y los ids pasan a ser los de Georef, así que hay que migrar
+  `users.locality`, `professionals.serviceAreaIds` y `requests.locality`, que
+  hoy guardan slugs.
 - Tests de las pantallas que todavía no tienen: chat, detalle de solicitud,
   perfil profesional y panel de admin.
 - La búsqueda por texto se hace en memoria sobre los primeros 100 activos de
   la localidad: alcanza para un pueblo, pero no escala a toda la provincia.
 - Notificar por email además de push, para quien no instala la PWA.
-- Un logo propio en SVG: los iconos actuales se generaron a partir del PNG
-  viejo (`scripts/` no los versiona, están en `public/`).
+- Un logo propio, dibujado de cero. Los vectores de hoy son un calco del PNG
+  viejo: sirven para que no se vea borroso, pero arrastran las irregularidades
+  de un original de 110×44 px.
 
 ## Cómo levantar todo
 

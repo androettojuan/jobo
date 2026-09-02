@@ -18,7 +18,12 @@ import { app, db } from '@/lib/firebase'
 import { isNative, platform } from '@/lib/platform'
 import type { AppNotification, FcmToken } from '@/types/models'
 
-import { currentNativeToken, onNativeForegroundMessage, requestNativeToken } from './nativePush'
+import {
+  currentNativeToken,
+  onNativeForegroundMessage,
+  requestNativeToken,
+  showNativeTestNotification,
+} from './nativePush'
 
 /** Por qué no se pudo registrar el dispositivo, para poder decirlo en pantalla. */
 export type PushFailure = 'unsupported' | 'denied' | 'no-vapid-key' | 'failed'
@@ -148,7 +153,15 @@ export async function showSystemNotification(title: string, body: string, link: 
  * los avisos apagados a nivel sistema, o que el push no esté llegando.
  */
 export async function showTestNotification() {
-  if (isNative) throw new PushError('unsupported')
+  if (isNative) {
+    try {
+      await showNativeTestNotification()
+    } catch (cause) {
+      throw new PushError('denied', { cause })
+    }
+    return
+  }
+
   if (typeof Notification === 'undefined') throw new PushError('unsupported')
   if (Notification.permission !== 'granted') throw new PushError('denied')
 

@@ -1,4 +1,5 @@
 import { FirebaseMessaging } from '@capacitor-firebase/messaging'
+import { LocalNotifications } from '@capacitor/local-notifications'
 
 /**
  * Push adentro del contenedor nativo. En la web todo esto lo hace el service
@@ -65,6 +66,31 @@ export async function onNativeNotificationTap(handler: (link: string) => void) {
     handler(readContent(event.notification).link),
   )
   return () => void handle.remove()
+}
+
+/**
+ * Aviso dibujado por el propio teléfono, sin pasar por la red.
+ *
+ * Es el equivalente nativo del que la web muestra desde el service worker, y
+ * sirve para lo mismo: separar "el teléfono tiene los avisos apagados o en
+ * silencio" de "el push no está llegando". Lanza si no se puede.
+ */
+export async function showNativeTestNotification() {
+  const { display } = await LocalNotifications.requestPermissions()
+  if (display !== 'granted') throw new Error('sin permiso para mostrar avisos')
+
+  await LocalNotifications.schedule({
+    notifications: [
+      {
+        // Un id fijo: probar dos veces reemplaza el aviso anterior en vez de
+        // llenar la barra de notificaciones.
+        id: 1,
+        title: 'Jobo',
+        body: 'Prueba: si ves este aviso, tu teléfono los muestra bien.',
+        smallIcon: 'ic_stat_jobo',
+      },
+    ],
+  })
 }
 
 /** Deja de recibir push en este dispositivo. Se llama al cerrar sesión. */

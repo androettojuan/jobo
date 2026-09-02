@@ -15,7 +15,10 @@ import {
 import type { FirestoreError } from 'firebase/firestore'
 
 import { app, db } from '@/lib/firebase'
-import type { AppNotification } from '@/types/models'
+import { isNative, platform } from '@/lib/platform'
+import type { AppNotification, FcmToken } from '@/types/models'
+
+import { currentNativeToken, onNativeForegroundMessage, requestNativeToken } from './nativePush'
 
 /** Por qué no se pudo registrar el dispositivo, para poder decirlo en pantalla. */
 export type PushFailure = 'unsupported' | 'denied' | 'no-vapid-key' | 'failed'
@@ -31,11 +34,45 @@ export class PushError extends Error {
 }
 
 /**
+ * Guarda el token de este dispositivo en la cuenta.
+ *
+ * Va con la plataforma al lado porque el push que hay que armar del otro lado
+ * es distinto en cada una: la web necesita el bloque `webpush`, Android no
+ * dibuja nada si el mensaje viene solo con `data`, y iOS no recibe nada sin
+ * bloque `apns`. Sin saber de dónde salió el token, el servidor no puede
+ * elegir.
+ *
+ * `arrayUnion` con un objeto solo deduplica si coincide entero: por eso el
+ * objeto no lleva fecha ni nada que cambie entre registros del mismo equipo.
+ */
+async function saveToken(uid: string, token: string) {
+  const entry: FcmToken = { token, platform }
+  await updateDoc(doc(db, 'users', uid), {
+    fcmTokens: arrayUnion(entry),
+    updatedAt: serverTimestamp(),
+  })
+}
+
+/**
  * Pide permiso de notificaciones y registra el token del dispositivo.
  * Devuelve el token, o lanza `PushError` con el motivo: sin permiso es muy
  * distinto de un fallo técnico y la pantalla tiene que poder diferenciarlos.
  */
 export async function enablePushNotifications(uid: string) {
+  if (isNative) {
+    let token: string | null
+    try {
+      token = await requestNativeToken()
+    } catch (cause) {
+      throw new PushError('failed', { cause })
+    }
+    // `null` acá es siempre permiso negado: el plugin lanza si falla de verdad.
+    if (!token) throw new PushError('denied')
+
+    await saveToken(uid, token)
+    return token
+  }
+
   if (!(await isSupported())) throw new PushError('unsupported')
 
   const permission = await Notification.requestPermission()
@@ -57,22 +94,19 @@ export async function enablePushNotifications(uid: string) {
   }
   if (!token) throw new PushError('failed')
 
-  await updateDoc(doc(db, 'users', uid), {
-    fcmTokens: arrayUnion(token),
-    updatedAt: serverTimestamp(),
-  })
-
+  await saveToken(uid, token)
   return token
 }
 
-/** El service worker que atiende los push, si está registrado. */
+/** El service worker que atiende los push, si está registrado. Solo en la web. */
 export function getMessagingRegistration() {
-  if (!('serviceWorker' in navigator)) return Promise.resolve(undefined)
+  if (isNative || !('serviceWorker' in navigator)) return Promise.resolve(undefined)
   return navigator.serviceWorker.getRegistration('/firebase-cloud-messaging-push-scope')
 }
 
 /** Token actual de este dispositivo, sin registrarlo ni pedir permisos. */
 export async function getCurrentToken() {
+  if (isNative) return currentNativeToken()
   if (!(await isSupported())) return null
   const registration = await getMessagingRegistration()
   if (!registration) return null
@@ -89,6 +123,9 @@ export async function getCurrentToken() {
  * viva en segundo plano: no está en pantalla, pero tampoco cerrada.
  */
 export async function showSystemNotification(title: string, body: string, link: string) {
+  // En nativo no hace falta: con la app en segundo plano el aviso lo dibuja el
+  // sistema por su cuenta, y este camino lo duplicaría.
+  if (isNative) return false
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return false
 
   const registration = await navigator.serviceWorker.getRegistration(
@@ -111,6 +148,7 @@ export async function showSystemNotification(title: string, body: string, link: 
  * los avisos apagados a nivel sistema, o que el push no esté llegando.
  */
 export async function showTestNotification() {
+  if (isNative) throw new PushError('unsupported')
   if (typeof Notification === 'undefined') throw new PushError('unsupported')
   if (Notification.permission !== 'granted') throw new PushError('denied')
 
@@ -131,6 +169,9 @@ export async function showTestNotification() {
 export async function onForegroundMessage(
   handler: (title: string, body: string, link: string) => void,
 ) {
+  if (isNative) {
+    return onNativeForegroundMessage(({ title, body, link }) => handler(title, body, link))
+  }
   if (!(await isSupported())) return () => {}
 
   return onMessage(getMessaging(app), (payload) => {

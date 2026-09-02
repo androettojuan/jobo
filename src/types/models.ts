@@ -35,6 +35,18 @@ export interface LocalityRef {
 /* users/{uid}                                                                */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Token de push de un dispositivo, con la plataforma que lo emitió.
+ *
+ * El aviso que hay que armar del otro lado no es el mismo en las tres: la web
+ * necesita bloque `webpush`, Android no muestra nada si el mensaje llega solo
+ * con `data`, y iOS no recibe nada sin bloque `apns`.
+ */
+export interface FcmToken {
+  token: string
+  platform: string
+}
+
 /** Perfil base: lo tiene TODO usuario, contrate o preste servicios. */
 export interface User {
   uid: Id
@@ -49,7 +61,7 @@ export interface User {
   /** true cuando el usuario activó su perfil profesional. */
   isProfessional: boolean
   /** Tokens de FCM por dispositivo, para push notifications. */
-  fcmTokens: string[]
+  fcmTokens: FcmToken[]
   /** Bloqueo administrativo. */
   disabled: boolean
   createdAt: Timestamp

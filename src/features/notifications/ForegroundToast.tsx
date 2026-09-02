@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { onForegroundMessage, showSystemNotification } from './api'
+import { onNativeNotificationTap } from './nativePush'
+import { isNative } from '@/lib/platform'
 
 interface Aviso {
   title: string
@@ -44,6 +46,28 @@ export function ForegroundToast() {
       stop?.()
     }
   }, [])
+
+  // Tocar el aviso en la barra de notificaciones abre la pantalla que
+  // corresponde. En la web esto lo hace el `notificationclick` del service
+  // worker; en nativo el aviso lo dibujó el sistema y avisa por acá.
+  useEffect(() => {
+    if (!isNative) return
+
+    let stop: (() => void) | undefined
+    let cancelled = false
+
+    onNativeNotificationTap((link) => navigate(link))
+      .then((unsubscribe) => {
+        if (cancelled) unsubscribe()
+        else stop = unsubscribe
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+      stop?.()
+    }
+  }, [navigate])
 
   // Se va solo: es un aviso, no una tarea pendiente.
   useEffect(() => {

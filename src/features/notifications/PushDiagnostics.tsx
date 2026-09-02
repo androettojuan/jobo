@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import { getMessagingRegistration } from './api'
+import { getCurrentToken, getMessagingRegistration } from './api'
+import { nativePermission } from './nativePush'
 import { useAuth } from '@/features/auth/useAuth'
+import { isNative, platform } from '@/lib/platform'
 
 interface Estado {
   permiso: string
@@ -28,6 +30,27 @@ export function PushDiagnostics() {
     let cancelado = false
 
     async function revisar(): Promise<Estado> {
+      const guardadas = profile?.fcmTokens ?? []
+      const enLaCuenta = (token: string | null) =>
+        token
+          ? guardadas.some((guardada) => guardada.token === token)
+            ? 'sí, está en tu cuenta'
+            : `NO está en tu cuenta (tiene ${guardadas.length})`
+          : '—'
+
+      // Adentro del contenedor nativo no hay service worker ni suscripción del
+      // navegador: el token lo da el sistema operativo y el aviso lo dibuja él.
+      if (isNative) {
+        const token = await getCurrentToken().catch(() => null)
+        return {
+          permiso: await nativePermission(),
+          serviceWorker: `no aplica (${platform})`,
+          suscripcion: 'no aplica',
+          token: token ? `${token.slice(0, 12)}…` : 'no se pudo obtener',
+          guardado: enLaCuenta(token),
+        }
+      }
+
       const permiso = typeof Notification === 'undefined' ? 'sin soporte' : Notification.permission
 
       const registration = await getMessagingRegistration()
@@ -54,20 +77,14 @@ export function PushDiagnostics() {
         ? `sí (${new URL(subscription.endpoint).host})`
         : 'NO HAY — sin esto no llega ningún push'
 
-      const { getCurrentToken } = await import('./api')
       const token = await getCurrentToken().catch(() => null)
-      const guardadas: string[] = profile?.fcmTokens ?? []
 
       return {
         permiso,
         serviceWorker: sw,
         suscripcion,
         token: token ? `${token.slice(0, 12)}…` : 'no se pudo obtener',
-        guardado: token
-          ? guardadas.includes(token)
-            ? 'sí, está en tu cuenta'
-            : `NO está en tu cuenta (tiene ${guardadas.length})`
-          : '—',
+        guardado: enLaCuenta(token),
       }
     }
 

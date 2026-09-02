@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Spinner } from '@/components/ui/Spinner'
+import { RowsSkeleton } from '@/components/ui/skeletons'
 import { listReports, resolveReport, setUserDisabled } from '@/features/admin/api'
 import { useAuth } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
@@ -79,7 +79,7 @@ export function AdminReportsPage() {
       </div>
 
       {loading ? (
-        <Spinner />
+        <RowsSkeleton />
       ) : reports.length === 0 ? (
         <EmptyState
           icon={ShieldCheck}

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Spinner } from '@/components/ui/Spinner'
+import { RowsSkeleton } from '@/components/ui/skeletons'
 import {
   approveCategory,
   listPendingCategories,
@@ -40,7 +40,7 @@ export function AdminCategoriesPage() {
     setPending((prev) => prev.filter((c) => c.id !== id))
   }
 
-  if (loading) return <Spinner />
+  if (loading) return <RowsSkeleton />
 
   return (
     <div className="flex flex-col gap-4">

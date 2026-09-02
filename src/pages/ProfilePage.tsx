@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Spinner } from '@/components/ui/Spinner'
+import { FormSkeleton } from '@/components/ui/skeletons'
 import { logout } from '@/features/auth/api'
 import { updateUserProfile, uploadAvatar } from '@/features/auth/profileApi'
 import { useAuth } from '@/features/auth/useAuth'
@@ -32,7 +32,7 @@ export function ProfilePage() {
     setLocality(profile.locality)
   }, [profile])
 
-  if (loading) return <Spinner />
+  if (loading) return <FormSkeleton fields={5} />
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()

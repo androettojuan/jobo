@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PhotoPicker } from '@/components/PhotoPicker'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Spinner } from '@/components/ui/Spinner'
+import { FormSkeleton } from '@/components/ui/skeletons'
 import { Textarea } from '@/components/ui/Textarea'
 import { useAuth } from '@/features/auth/useAuth'
 import { useLocalityStore } from '@/features/localities/store'
@@ -74,7 +74,7 @@ export function NewRequestPage() {
     }
   }
 
-  if (loading) return <Spinner />
+  if (loading) return <FormSkeleton fields={4} />
   if (!professional) {
     return <p className="p-6 text-center text-slate-500">Este profesional ya no está disponible.</p>
   }

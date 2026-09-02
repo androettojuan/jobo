@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { CardListSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/features/auth/useAuth'
 import {
   allowedTransitions,
@@ -59,7 +59,7 @@ export function RequestDetailPage() {
     }
   }, [request, firebaseUser])
 
-  if (loading) return <Spinner />
+  if (loading) return <CardListSkeleton rows={3} header={false} />
   if (!request || !firebaseUser) {
     return <p className="p-6 text-center text-slate-500">No encontramos esta solicitud.</p>
   }

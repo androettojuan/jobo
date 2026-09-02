@@ -1,11 +1,12 @@
 import { MessagesSquare } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 
 import { EmptyState } from '@/components/EmptyState'
-import { Spinner } from '@/components/ui/Spinner'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { AvatarListSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/features/auth/useAuth'
-import { subscribeToChats } from '@/features/chat/api'
+import { hideChat, subscribeToChats } from '@/features/chat/api'
+import { ChatRow } from '@/features/chat/components/ChatRow'
 import { CATEGORIES_BY_ID } from '@/lib/categories'
 import { cn } from '@/lib/utils'
 import type { Chat } from '@/types/models'
@@ -17,6 +18,9 @@ export function ChatsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('')
   const [error, setError] = useState('')
+  // La conversación que se está por eliminar, mientras se confirma.
+  const [toDelete, setToDelete] = useState<Chat | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!firebaseUser) return
@@ -42,7 +46,21 @@ export function ChatsPage() {
 
   const visible = filter ? chats.filter((c) => c.categoryId === filter) : chats
 
-  if (loading) return <Spinner />
+  async function remove() {
+    if (!toDelete || !firebaseUser) return
+
+    setDeleting(true)
+    try {
+      await hideChat(toDelete.id, firebaseUser.uid)
+      setToDelete(null)
+    } catch {
+      setError('No pudimos eliminar la conversación. Probá de nuevo.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  if (loading) return <AvatarListSkeleton />
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -95,53 +113,22 @@ export function ChatsPage() {
         />
       ) : (
         <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-800">
-          {visible.map((chat) => {
-            const otherId = chat.participantIds.find((id) => id !== firebaseUser?.uid)
-            const other = otherId ? chat.participants[otherId] : undefined
-            const unread = firebaseUser ? (chat.unreadCount?.[firebaseUser.uid] ?? 0) : 0
-            const category = chat.categoryId ? CATEGORIES_BY_ID.get(chat.categoryId) : undefined
-
-            return (
-              <li key={chat.id}>
-                <Link to={`/chats/${chat.id}`} className="flex items-center gap-3 py-3">
-                  {other?.photoURL ? (
-                    <img
-                      src={other.photoURL}
-                      alt=""
-                      className="size-12 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="grid size-12 place-items-center rounded-full bg-slate-100 font-semibold text-slate-500 dark:bg-slate-800">
-                      {other?.displayName?.charAt(0) ?? '?'}
-                    </div>
-                  )}
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate font-medium">{other?.displayName ?? 'Conversación'}</p>
-                      {category && (
-                        <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-medium text-brand-700 dark:bg-slate-800 dark:text-brand-500">
-                          {category.name}
-                        </span>
-                      )}
-                    </div>
-                    {chat.requestTitle && (
-                      <p className="truncate text-xs text-slate-400">{chat.requestTitle}</p>
-                    )}
-                    <p className="truncate text-sm text-slate-500">{chat.lastMessage}</p>
-                  </div>
-
-                  {unread > 0 && (
-                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-600 text-xs font-medium text-white">
-                      {unread}
-                    </span>
-                  )}
-                </Link>
-              </li>
-            )
-          })}
+          {visible.map((chat) => (
+            <ChatRow key={chat.id} chat={chat} uid={firebaseUser?.uid} onDelete={setToDelete} />
+          ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={toDelete !== null}
+        title="Eliminar la conversación"
+        description="Se saca de tu casilla. La otra persona conserva la suya, y si te vuelve a escribir la charla reaparece."
+        confirmLabel="Eliminar"
+        destructive
+        loading={deleting}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() => void remove()}
+      />
     </div>
   )
 }

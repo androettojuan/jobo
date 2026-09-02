@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
+import { MessagesSkeleton } from '@/components/ui/skeletons'
 import {
   markChatRead,
   sendImageMessage,
@@ -20,6 +21,8 @@ export function ChatPage() {
   const { firebaseUser } = useAuth()
   const [chat, setChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
+  // Sin esto no se puede distinguir "todavía no llegó nada" de "chat vacío".
+  const [loadingMessages, setLoadingMessages] = useState(true)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -27,8 +30,16 @@ export function ChatPage() {
 
   useEffect(() => {
     if (!chatId) return
-    return subscribeToMessages(chatId, setMessages, () =>
-      setError('No pudimos cargar la conversación. Revisá la conexión.'),
+    return subscribeToMessages(
+      chatId,
+      (list) => {
+        setMessages(list)
+        setLoadingMessages(false)
+      },
+      () => {
+        setError('No pudimos cargar la conversación. Revisá la conexión.')
+        setLoadingMessages(false)
+      },
     )
   }, [chatId])
 
@@ -114,6 +125,8 @@ export function ChatPage() {
           </Link>
         )}
       </header>
+
+      {loadingMessages && <MessagesSkeleton />}
 
       <ul className="flex flex-1 flex-col gap-2 overflow-y-auto p-4">
         {messages.map((message) => {

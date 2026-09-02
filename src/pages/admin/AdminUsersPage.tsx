@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Spinner } from '@/components/ui/Spinner'
+import { RowsSkeleton } from '@/components/ui/skeletons'
 import { findUsers, setUserDisabled } from '@/features/admin/api'
 import type { User } from '@/types/models'
 
@@ -49,7 +49,7 @@ export function AdminUsersPage() {
       />
 
       {loading ? (
-        <Spinner />
+        <RowsSkeleton />
       ) : users.length === 0 ? (
         <EmptyState
           icon={Users}

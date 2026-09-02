@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { RowsSkeleton } from '@/components/ui/skeletons'
 import { listProfessionals, setProfessionalVerified } from '@/features/admin/api'
 import { CATEGORIES_BY_ID } from '@/lib/categories'
 import type { Professional } from '@/types/models'
@@ -50,7 +50,7 @@ export function AdminProfessionalsPage() {
       </label>
 
       {loading ? (
-        <Spinner />
+        <RowsSkeleton />
       ) : professionals.length === 0 ? (
         <EmptyState
           icon={BadgeCheck}

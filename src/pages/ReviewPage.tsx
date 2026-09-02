@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
-import { Spinner } from '@/components/ui/Spinner'
+import { FormSkeleton } from '@/components/ui/skeletons'
 import { StarRating } from '@/components/ui/StarRating'
 import { Textarea } from '@/components/ui/Textarea'
 import { useAuth } from '@/features/auth/useAuth'
@@ -53,7 +53,7 @@ export function ReviewPage() {
     }
   }, [requestId])
 
-  if (loading) return <Spinner />
+  if (loading) return <FormSkeleton fields={2} />
   if (!request || !profile) {
     return <p className="p-6 text-center text-slate-500">No encontramos esta solicitud.</p>
   }

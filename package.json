@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:native": "VITE_TARGET=native tsc -b && VITE_TARGET=native vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "emulators": "firebase emulators:start",
@@ -16,9 +17,24 @@
     "test": "vitest run",
     "test:ui": "vitest run --project ui",
     "test:watch": "vitest",
-    "admin": "node scripts/set-admin.mjs"
+    "admin": "node scripts/set-admin.mjs",
+    "cap:sync": "npm run build:native && npx cap sync",
+    "cap:android": "npm run cap:sync && npx cap open android",
+    "cap:ios": "npm run cap:sync && npx cap open ios"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "^8.5.1",
+    "@capacitor-firebase/messaging": "^8.5.1",
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/camera": "^8.2.4",
+    "@capacitor/cli": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/geolocation": "^8.2.2",
+    "@capacitor/ios": "^8.5.1",
+    "@capacitor/keyboard": "^8.0.5",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
     "@hookform/resolvers": "^5.9.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

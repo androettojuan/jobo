@@ -5,6 +5,13 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// El build nativo (Capacitor) se compila con `VITE_TARGET=native`. Adentro del
+// contenedor el service worker de la PWA no aporta nada y sí puede servir
+// código viejo cacheado después de una actualización bajada de la tienda: el
+// mismo problema que ya costó caro con los push. La app se actualiza por la
+// tienda, no por el service worker.
+const isNative = process.env.VITE_TARGET === 'native'
+
 // https://vite.dev/config/
 export default defineConfig({
   server: {
@@ -25,6 +32,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      // `disable` deja el plugin en su lugar —sigue resolviendo
+      // `virtual:pwa-register/react`, que importa UpdatePrompt— pero no genera
+      // ni registra ningún service worker.
+      disable: isNative,
       registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {

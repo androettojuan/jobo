@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Jobo</string>
+    <string name="title_activity_main">Jobo</string>
+    <string name="package_name">com.jobo.app</string>
+    <string name="custom_url_scheme">com.jobo.app</string>
+</resources>

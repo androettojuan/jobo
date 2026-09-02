@@ -35,3 +35,9 @@ functions/lib/
 
 # Salidas de Playwright MCP
 .playwright-mcp/
+
+# Firma de Android: si se pierde el keystore no se puede volver a publicar
+# una actualización de la app. Va fuera del repo, con respaldo aparte.
+*.jks
+*.keystore
+android/keystore.properties

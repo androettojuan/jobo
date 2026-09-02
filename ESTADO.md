@@ -1,7 +1,7 @@
 # Estado del proyecto
 
 Registro para retomar el trabajo más adelante.
-Última actualización: **29 de agosto de 2026**.
+Última actualización: **2 de septiembre de 2026**.
 
 El código vive en GitHub: `androettojuan/jobo` (repo privado).
 
@@ -132,6 +132,26 @@ raíz, el timer de actualización del service worker con su cleanup, el contexto
 de auth fuera del archivo del provider, y las tres pantallas más enredadas
 (home, panel del profesional y ficha pública) partidas en componentes bajo
 `src/features/*/components/`.
+
+## Rumbo a las tiendas
+
+Arrancó el trabajo para publicar Jobo en Google Play y App Store. El plan
+completo —incluidos los requisitos de política que hoy no se cumplen— está en
+`PLAN-TIENDAS.md`.
+
+La app web se envuelve con **Capacitor**; el `appId` es **`com.jobo.app`** y no
+se puede cambiar una vez publicada. Las carpetas `android/` e `ios/` se
+versionan. El build nativo va aparte (`npm run build:native`, con
+`VITE_TARGET=native`) porque adentro del contenedor el service worker de la PWA
+sobra y puede servir código viejo cacheado después de una actualización bajada
+de la tienda.
+
+Ya anda el circuito de compilación: `npm run cap:sync` y `assembleDebug` sacan
+un APK. Falta probarlo en un teléfono, y falta todo lo de la Fase 2 del plan:
+el login con Google no funciona en un WebView (`signInWithPopup` no abre nada),
+iOS exige sumar Sign in with Apple, y los push hay que rehacerlos —hoy
+`functions/src/shared.ts` manda solo `data` con bloque `webpush`, que en
+Android nativo no dibuja nada con la app cerrada y en iOS no llega.
 
 ## Pendiente para el próximo tramo
 

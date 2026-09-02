@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "891114567956",
+    "firebase_url": "https://jobo-8b688-default-rtdb.firebaseio.com",
+    "project_id": "jobo-8b688",
+    "storage_bucket": "jobo-8b688.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:891114567956:android:b96c9e260e44523de06a01",
+        "android_client_info": {
+          "package_name": "com.jobo.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "891114567956-1chlg0ephon0vkn886j4ncqa027aas1m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jobo.app",
+            "certificate_hash": "a4046dd6073be5c5f4eb0d2ce764e1f1ac7d98a8"
+          }
+        },
+        {
+          "client_id": "891114567956-vr0fg07ned4kjebdnkdq2v5l41vtlaeu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFmqbjnMf3dSLh7e752m0DCny1jBmw2RU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "891114567956-vr0fg07ned4kjebdnkdq2v5l41vtlaeu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

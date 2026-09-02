@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { authErrorMessage, loginWithGoogle, registerWithEmail } from '@/features/auth/api'
+import { authErrorMessage, registerWithEmail } from '@/features/auth/api'
+import { ProviderButtons } from '@/features/auth/components/ProviderButtons'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -71,14 +72,7 @@ export function RegisterPage() {
         </Button>
       </form>
 
-      <Button
-        variant="secondary"
-        size="lg"
-        disabled={loading}
-        onClick={() => void run(loginWithGoogle)}
-      >
-        Continuar con Google
-      </Button>
+      <ProviderButtons disabled={loading} onRun={(action) => void run(action)} />
 
       <p className="text-center text-sm text-slate-500">
         ¿Ya tenés cuenta?{' '}

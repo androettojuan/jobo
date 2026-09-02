@@ -3,7 +3,8 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { authErrorMessage, loginWithEmail, loginWithGoogle } from '@/features/auth/api'
+import { authErrorMessage, loginWithEmail } from '@/features/auth/api'
+import { ProviderButtons } from '@/features/auth/components/ProviderButtons'
 import { useAuth } from '@/features/auth/useAuth'
 
 export function LoginPage() {
@@ -74,14 +75,7 @@ export function LoginPage() {
         <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
       </div>
 
-      <Button
-        variant="secondary"
-        size="lg"
-        disabled={loading}
-        onClick={() => void run(loginWithGoogle)}
-      >
-        Continuar con Google
-      </Button>
+      <ProviderButtons disabled={loading} onRun={(action) => void run(action)} />
 
       <p className="text-center text-sm text-slate-500">
         ¿No tenés cuenta?{' '}

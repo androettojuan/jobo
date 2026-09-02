@@ -1,14 +1,19 @@
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
+  OAuthProvider,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   updateProfile,
+  type User,
 } from 'firebase/auth'
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 
 import { auth, db } from '@/lib/firebase'
+import { isNative } from '@/lib/platform'
 
 /** Crea users/{uid} si todavía no existe. Idempotente. */
 async function ensureProfile(
@@ -55,18 +60,63 @@ export async function loginWithEmail(email: string, password: string) {
   return cred.user
 }
 
-export async function loginWithGoogle() {
-  const cred = await signInWithPopup(auth, new GoogleAuthProvider())
-  await ensureProfile(cred.user.uid, {
-    displayName: cred.user.displayName ?? 'Usuario',
-    email: cred.user.email ?? '',
-    photoURL: cred.user.photoURL,
+/**
+ * Deja la sesión lista después de entrar con un proveedor: crea el documento
+ * de perfil si es la primera vez.
+ *
+ * `fallbackName` existe por Apple: el nombre lo manda **una sola vez**, en el
+ * primer login, y el usuario de Firebase todavía no lo tiene. Si no se guarda
+ * en ese momento, no se recupera nunca más.
+ */
+async function finishProviderLogin(user: User, fallbackName?: string | null) {
+  await ensureProfile(user.uid, {
+    displayName: user.displayName ?? fallbackName ?? 'Usuario',
+    email: user.email ?? '',
+    photoURL: user.photoURL,
   })
-  return cred.user
+  return user
 }
 
-export function logout() {
-  return signOut(auth)
+export async function loginWithGoogle() {
+  // En la web alcanza con el popup. Adentro del contenedor nativo no abre
+  // nada: el WebView no tiene dónde poner esa ventana. Ahí se hace el login
+  // con la pantalla nativa de Google y después se canjea el token por una
+  // sesión del SDK de JavaScript, que es la que usa toda la app.
+  if (!isNative) {
+    const cred = await signInWithPopup(auth, new GoogleAuthProvider())
+    return finishProviderLogin(cred.user)
+  }
+
+  const result = await FirebaseAuthentication.signInWithGoogle()
+  const idToken = result.credential?.idToken
+  if (!idToken) throw new Error('Google no devolvió el token de identidad')
+
+  const cred = await signInWithCredential(auth, GoogleAuthProvider.credential(idToken))
+  return finishProviderLogin(cred.user, result.user?.displayName)
+}
+
+/**
+ * Login con Apple. Solo se ofrece en iOS: la regla 4.8 de la App Store exige
+ * una alternativa que preserve la privacidad cuando hay login con Google.
+ */
+export async function loginWithApple() {
+  const result = await FirebaseAuthentication.signInWithApple()
+  const { idToken, nonce } = result.credential ?? {}
+  if (!idToken) throw new Error('Apple no devolvió el token de identidad')
+
+  // `rawNonce` tiene que ser el mismo que firmó el token; el plugin lo
+  // devuelve ya generado. Sin él, Firebase rechaza la credencial.
+  const credential = new OAuthProvider('apple.com').credential({ idToken, rawNonce: nonce })
+  const cred = await signInWithCredential(auth, credential)
+  return finishProviderLogin(cred.user, result.user?.displayName)
+}
+
+export async function logout() {
+  // En nativo también hay que cerrar la sesión del lado del plugin: si no,
+  // la próxima vez Google entra derecho con la última cuenta, sin dejar
+  // elegir otra.
+  if (isNative) await FirebaseAuthentication.signOut()
+  await signOut(auth)
 }
 
 /** Traduce los códigos de Firebase Auth a mensajes que se le pueden mostrar a alguien. */
@@ -85,6 +135,8 @@ export function authErrorMessage(error: unknown): string {
       return 'La contraseña debe tener al menos 6 caracteres.'
     case 'auth/popup-closed-by-user':
       return 'Cerraste la ventana de Google antes de terminar.'
+    case 'auth/account-exists-with-different-credential':
+      return 'Ya hay una cuenta con ese email, creada con otro método de ingreso.'
     case 'auth/network-request-failed':
       return 'No hay conexión. Revisá tu internet.'
     case 'auth/operation-not-allowed':

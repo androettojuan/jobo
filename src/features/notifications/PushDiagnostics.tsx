@@ -21,6 +21,10 @@ export function PushDiagnostics() {
   const [estado, setEstado] = useState<Estado | null>(null)
 
   useEffect(() => {
+    // Sin admin no se dibuja nada, así que tampoco hace falta ir a mirar el
+    // service worker ni pedirle el token a Firebase.
+    if (!isAdmin) return
+
     let cancelado = false
 
     async function revisar(): Promise<Estado> {
@@ -78,7 +82,7 @@ export function PushDiagnostics() {
     return () => {
       cancelado = true
     }
-  }, [profile])
+  }, [profile, isAdmin])
 
   // Es una herramienta de soporte, no algo que le sirva a un vecino.
   if (!isAdmin) return null

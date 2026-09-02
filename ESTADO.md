@@ -113,11 +113,12 @@ tramo de registro, perfil y contadores también contra producción:
   `notification`, el SDK dibuja su propio aviso además del que dibuja el
   service worker y se ven dos— y con urgencia alta, porque si no Android los
   demora o los descarta en segundo plano.
-- La pantalla de avisos tiene un botón que dispara un aviso local (distingue
-  "el teléfono los tiene apagados" de "el push no llega") y, para el admin, un
-  panel con lo que solo se puede mirar desde el propio dispositivo: permiso,
-  service worker, suscripción push y si el token de ese equipo está guardado
-  en la cuenta.
+- Con los push ya andando, las herramientas de diagnóstico de la pantalla de
+  avisos quedaron solo para el admin: el botón que dispara un aviso local
+  (distingue "el teléfono los tiene apagados" de "el push no llega") y el panel
+  con lo que únicamente se ve desde el propio dispositivo —permiso, service
+  worker, suscripción push y si el token de ese equipo está en la cuenta—. Un
+  vecino con los avisos activos no ve nada: no hay nada que hacer ahí.
 
 ## Salud del código
 

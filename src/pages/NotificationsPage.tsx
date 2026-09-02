@@ -28,7 +28,7 @@ const FAILURE_MESSAGE: Record<PushFailure, string> = {
 }
 
 export function NotificationsPage() {
-  const { firebaseUser } = useAuth()
+  const { firebaseUser, isAdmin } = useAuth()
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [pushState, setPushState] = useState<'idle' | 'working' | 'on' | 'failed'>('idle')
@@ -162,7 +162,10 @@ export function NotificationsPage() {
         </div>
       )}
 
-      {pushState === 'on' && (
+      {/* Con los avisos ya andando no hay nada que hacer acá, así que a un vecino
+          no le mostramos nada. Al admin sí: es la herramienta que distingue "el
+          teléfono los tiene apagados" de "el push no llega". */}
+      {pushState === 'on' && isAdmin && (
         <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
           <p className="text-sm font-medium">Los avisos están activos en este dispositivo</p>
           <Button

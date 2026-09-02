@@ -1,5 +1,6 @@
 import {
   addDoc,
+  arrayUnion,
   collection,
   doc,
   limit,
@@ -17,7 +18,10 @@ import { db, functions } from '@/lib/firebase'
 import { uploadImage } from '@/lib/storage'
 import type { FirestoreError } from 'firebase/firestore'
 
-import type { Chat, Message } from '@/types/models'
+import type { Chat, Message, RequestStatus } from '@/types/models'
+
+/** Trabajos que ya no van a moverse: recién ahí tiene sentido archivar la charla. */
+const CLOSED_STATUSES = new Set<RequestStatus>(['completed', 'rejected', 'cancelled'])
 
 /**
  * Suscripción en vivo a la lista de chats del usuario.
@@ -36,9 +40,34 @@ export function subscribeToChats(
       orderBy('lastMessageAt', 'desc'),
       limit(50),
     ),
-    (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Chat)),
+    (snap) =>
+      onChange(
+        visibleFor(
+          uid,
+          snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Chat),
+        ),
+      ),
     onError,
   )
+}
+
+/** Los chats que esa persona no archivó. El otro participante sigue viendo el suyo. */
+export function visibleFor(uid: string, chats: Chat[]) {
+  return chats.filter((chat) => !chat.hiddenFor?.includes(uid))
+}
+
+/** Una charla se puede archivar cuando la solicitud que la abrió ya está cerrada. */
+export function canHideChat(chat: Chat) {
+  return chat.requestStatus !== null && CLOSED_STATUSES.has(chat.requestStatus)
+}
+
+/**
+ * Saca la conversación de la casilla de quien la archiva. No borra los
+ * mensajes: el otro participante conserva su copia, y si vuelve a escribir la
+ * charla reaparece (lo limpia `onMessageCreated`).
+ */
+export async function hideChat(chatId: string, uid: string) {
+  await updateDoc(doc(db, 'chats', chatId), { hiddenFor: arrayUnion(uid) })
 }
 
 /** Suscripción en vivo a los mensajes de un chat, del más viejo al más nuevo. */

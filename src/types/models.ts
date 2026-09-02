@@ -187,6 +187,18 @@ export interface Chat {
   lastMessageSenderId: Id | null
   /** uid -> cantidad de mensajes sin leer. Lo actualiza una Cloud Function. */
   unreadCount: Record<Id, number>
+  /**
+   * Estado de la solicitud que originó el chat, copiado acá por una Cloud
+   * Function: la casilla necesita saber si la charla está cerrada sin tener
+   * que leer una solicitud por fila.
+   */
+  requestStatus: RequestStatus | null
+  /**
+   * Quiénes archivaron esta conversación. El borrado es de cada uno: sacarla
+   * de tu casilla no se la saca al otro. Si llega un mensaje nuevo la lista se
+   * vacía y el chat reaparece, para que nadie quede incomunicado sin saberlo.
+   */
+  hiddenFor: Id[]
   createdAt: Timestamp
 }
 

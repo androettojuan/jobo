@@ -185,6 +185,8 @@ describe('chats', () => {
     lastMessageAt: new Date(),
     lastMessageSenderId: CLIENT,
     unreadCount: { [CLIENT]: 0, [PRO]: 1 },
+    requestStatus: 'completed',
+    hiddenFor: [],
     createdAt: new Date(),
   }
 
@@ -245,6 +247,32 @@ describe('chats', () => {
   it('nadie puede tocar sus propios no leídos', async () => {
     const db = env.authenticatedContext(PRO).firestore()
     await assertFails(updateDoc(doc(db, 'chats/chat-1'), { [`unreadCount.${PRO}`]: 0 }))
+  })
+
+  it('el estado de la solicitud lo copia el servidor, no el cliente', async () => {
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertFails(updateDoc(doc(db, 'chats/chat-1'), { requestStatus: 'pending' }))
+  })
+
+  it('cada uno puede archivar la conversación para sí mismo', async () => {
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertSucceeds(updateDoc(doc(db, 'chats/chat-1'), { hiddenFor: [CLIENT] }))
+  })
+
+  it('nadie puede archivar la conversación del otro', async () => {
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertFails(updateDoc(doc(db, 'chats/chat-1'), { hiddenFor: [PRO] }))
+  })
+
+  it('nadie puede desarchivar la conversación del otro', async () => {
+    await seed((db) => setDoc(doc(db, 'chats/chat-1'), { ...chat, hiddenFor: [PRO] }))
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertFails(updateDoc(doc(db, 'chats/chat-1'), { hiddenFor: [] }))
+  })
+
+  it('un tercero no archiva nada', async () => {
+    const db = env.authenticatedContext(STRANGER).firestore()
+    await assertFails(updateDoc(doc(db, 'chats/chat-1'), { hiddenFor: [STRANGER] }))
   })
 })
 
@@ -365,7 +393,6 @@ describe('teléfono público', () => {
     )
   })
 })
-
 
 describe('notificaciones', () => {
   beforeEach(async () => {

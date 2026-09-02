@@ -18,11 +18,14 @@ export const onMessageCreated = onDocumentCreated(
     const recipients = participantIds.filter((uid) => uid !== message.senderId)
     const senderName = chat.get(`participants.${message.senderId}.displayName`) ?? 'Alguien'
 
-    await chatRef.update(
-      Object.fromEntries(
+    await chatRef.update({
+      ...Object.fromEntries(
         recipients.map((uid) => [`unreadCount.${uid}`, FieldValue.increment(1)]),
       ),
-    )
+      // Un mensaje nuevo devuelve la charla a las dos casillas: si el otro
+      // vuelve a escribir después de que archivaste, tenés que enterarte.
+      hiddenFor: [],
+    })
 
     await Promise.all(
       recipients.map((uid) =>

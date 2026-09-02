@@ -70,6 +70,12 @@ export const onRequestUpdated = onDocumentUpdated('requests/{requestId}', async 
     await notify({ ...message, link: after.status === 'completed' ? `${link}/resena` : link })
   }
 
+  // La casilla necesita saber si la charla está cerrada sin leer una solicitud
+  // por fila, así que el estado se copia al chat.
+  if (after.chatId) {
+    await db.doc(`chats/${after.chatId}`).update({ requestStatus: after.status })
+  }
+
   if (after.status === 'completed') {
     await db.doc(`professionals/${after.professionalId}`).update({
       completedJobs: FieldValue.increment(1),

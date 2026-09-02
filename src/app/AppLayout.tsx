@@ -8,6 +8,7 @@ import { useUnreadChats } from '@/features/chat/useUnreadChats'
 import { ForegroundToast } from '@/features/notifications/ForegroundToast'
 import { InstallPrompt } from '@/features/pwa/InstallPrompt'
 import { UpdatePrompt } from '@/features/pwa/UpdatePrompt'
+import { isNative } from '@/lib/platform'
 import { cn } from '@/lib/utils'
 
 const BASE_TABS = [
@@ -49,13 +50,19 @@ export function AppLayout() {
 
   return (
     <div className="mx-auto flex h-full max-w-2xl flex-col">
-      <main className={cn('flex-1 overflow-y-auto', immersive ? 'h-full' : 'safe-top pb-20')}>
-        {!immersive && <InstallPrompt />}
+      {/* Tapa el hueco de la barra de estado: el contenido scrollea por
+          debajo y sin esto se lee encima de la hora y la batería. */}
+      <div aria-hidden className="status-scrim fixed inset-x-0 top-0 z-40" />
+
+      <main className={cn('flex-1 overflow-y-auto', immersive ? 'h-full' : 'safe-top pb-nav')}>
+        {!immersive && !isNative && <InstallPrompt />}
         <Outlet />
       </main>
 
       <ForegroundToast />
-      <UpdatePrompt />
+      {/* Adentro del contenedor nativo no hay nada que instalar ni que
+          actualizar a mano: de eso se encarga la tienda. */}
+      {!isNative && <UpdatePrompt />}
 
       {!immersive && (
         <nav className="safe-bottom fixed inset-x-0 bottom-0 mx-auto max-w-2xl border-t border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">

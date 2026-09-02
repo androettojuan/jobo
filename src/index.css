@@ -40,3 +40,23 @@ body {
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/*
+ * Espacio libre al final del contenido para que la barra de abajo no tape lo
+ * último. No alcanza con un `pb-20` fijo: la barra mide su alto MÁS lo que el
+ * sistema reserve abajo, y en un teléfono con los tres botones de navegación
+ * eso son casi 50px más. Con el padding fijo, el último botón queda cortado.
+ */
+.pb-nav {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
+/*
+ * Fondo detrás de la barra de estado. La app se dibuja de punta a punta, así
+ * que sin esto el contenido pasa por abajo de la hora y la batería al
+ * scrollear. El color es el mismo del `body`, en sus dos temas.
+ */
+.status-scrim {
+  height: env(safe-area-inset-top);
+  @apply bg-white dark:bg-slate-950;
+}

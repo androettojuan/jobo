@@ -16,7 +16,9 @@ import {
   type ProfessionalDraft,
 } from '@/features/professionals/profileApi'
 import { CATEGORIES } from '@/lib/categories'
-import { LOCALITIES, toLocalityRef } from '@/lib/localities'
+import { LocalitySelect } from '@/features/localities/LocalitySelect'
+import { ServiceAreaPicker } from '@/features/localities/ServiceAreaPicker'
+import { toLocalityRef } from '@/lib/localities'
 import type { ProfessionalStatus } from '@/types/models'
 
 const MAX_CATEGORIES = 5
@@ -208,39 +210,16 @@ export function ProfessionalEditPage() {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="locality"
-          className="text-sm font-medium text-slate-700 dark:text-slate-300"
-        >
-          Localidad donde vivís
-        </label>
-        <select
-          id="locality"
-          value={draft.locality?.id ?? ''}
-          onChange={(e) => {
-            const found = LOCALITIES.find((l) => l.id === e.target.value)
-            patch({ locality: found ? toLocalityRef(found) : null })
-          }}
-          className="h-11 rounded-xl border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900"
-        >
-          <option value="">Elegí tu localidad</option>
-          {LOCALITIES.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <LocalitySelect
+        label="Localidad donde vivís"
+        value={draft.locality?.id ?? null}
+        onChange={(found) => patch({ locality: found ? toLocalityRef(found) : null })}
+      />
 
-      <ChipGroup
-        label="¿A qué otras localidades vas?"
-        hint="Tu localidad ya está incluida. Marcá las demás donde estés dispuesto a trabajar."
-        options={LOCALITIES.flatMap((l) =>
-          l.id === draft.locality?.id ? [] : [{ id: l.id, name: l.name }],
-        )}
+      <ServiceAreaPicker
         selected={draft.serviceAreaIds}
         onToggle={(id) => toggle('serviceAreaIds', id)}
+        exclude={draft.locality?.id ?? null}
       />
 
       <fieldset className="flex gap-3">

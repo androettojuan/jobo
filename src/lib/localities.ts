@@ -1,18 +1,79 @@
 import type { Locality, LocalityRef } from '@/types/models'
 
-import localitiesData from './data/localities.json'
-
 /**
- * Catálogo de localidades. Arrancamos por el Valle de Calamuchita y se va
- * ampliando: agregar una localidad acá (y correr el seed) alcanza para que
- * aparezca en los filtros.
+ * Catálogo de localidades de todo el país: las 4037 que publica la API Georef
+ * del Estado (INDEC, IGN y BAHRA). Lo regenera `scripts/fetch-localities.mjs`.
+ *
+ * Se carga aparte del bundle a propósito: son ~80 KB comprimidos que no hacen
+ * falta para abrir la app, solo para elegir o adivinar un pueblo. `load()`
+ * guarda la promesa, así que aunque tres pantallas lo pidan a la vez se baja
+ * una sola vez.
  */
-export const LOCALITIES = localitiesData as Locality[]
+interface CompactCatalog {
+  provinces: string[]
+  /** [id, nombre, índice de provincia, lat, lng] */
+  localities: [string, string, number, number, number][]
+}
 
-export const LOCALITIES_BY_ID = new Map(LOCALITIES.map((l) => [l.id, l]))
+let pending: Promise<Locality[]> | null = null
+let loaded: Locality[] | null = null
+
+export function loadLocalities(): Promise<Locality[]> {
+  if (loaded) return Promise.resolve(loaded)
+
+  pending ??= import('./data/localities.json').then((mod) => {
+    const data = mod.default as CompactCatalog
+    const list: Locality[] = data.localities.map(([id, name, province, lat, lng]) => ({
+      id,
+      name,
+      province: data.provinces[province] ?? '',
+      lat,
+      lng,
+    }))
+    loaded = list
+    return list
+  })
+
+  return pending
+}
+
+/** El catálogo si ya está en memoria; null si todavía no se pidió. */
+export function localitiesIfLoaded() {
+  return loaded
+}
 
 export function toLocalityRef(locality: Locality): LocalityRef {
   return { id: locality.id, name: locality.name, province: locality.province }
+}
+
+/**
+ * Busca por nombre, tolerante a acentos y mayúsculas. Con 4000 localidades no
+ * se puede mostrar la lista entera: la pantalla pide de a un puñado.
+ */
+export function searchLocalities(catalog: Locality[], term: string, max = 30) {
+  const needle = normalize(term.trim())
+  if (!needle) return catalog.slice(0, max)
+
+  const starts: Locality[] = []
+  const contains: Locality[] = []
+
+  for (const locality of catalog) {
+    const name = normalize(locality.name)
+    // Lo que empieza con lo tecleado va primero: escribir "cor" tiene que
+    // traer Córdoba antes que Las Corzuelas.
+    if (name.startsWith(needle)) starts.push(locality)
+    else if (name.includes(needle)) contains.push(locality)
+    if (starts.length >= max) break
+  }
+
+  return [...starts, ...contains].slice(0, max)
+}
+
+export function normalize(text: string) {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
 }
 
 /** Distancia aproximada en km entre dos puntos (fórmula del haversine). */
@@ -41,18 +102,22 @@ export function detectLocality(maxKm = 60): Promise<Locality | null> {
 
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        let best: Locality | null = null
-        let bestKm = Infinity
+        loadLocalities()
+          .then((catalog) => {
+            let best: Locality | null = null
+            let bestKm = Infinity
 
-        for (const locality of LOCALITIES) {
-          const km = distanceKm(coords.latitude, coords.longitude, locality.lat, locality.lng)
-          if (km < bestKm) {
-            bestKm = km
-            best = locality
-          }
-        }
+            for (const locality of catalog) {
+              const km = distanceKm(coords.latitude, coords.longitude, locality.lat, locality.lng)
+              if (km < bestKm) {
+                bestKm = km
+                best = locality
+              }
+            }
 
-        resolve(bestKm <= maxKm ? best : null)
+            resolve(bestKm <= maxKm ? best : null)
+          })
+          .catch(() => reject(new Error('No pudimos cargar el listado de localidades.')))
       },
       () => reject(new Error('No pudimos acceder a tu ubicación. Elegí tu localidad a mano.')),
       { timeout: 10_000, maximumAge: 5 * 60_000 },

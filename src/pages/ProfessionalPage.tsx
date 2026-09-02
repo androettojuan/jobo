@@ -10,7 +10,7 @@ import { useProfessionalProfile } from '@/features/professionals/hooks/useProfes
 import { ReportButton } from '@/features/reports/ReportButton'
 import { replyToReview } from '@/features/reviews/api'
 import { ReviewList } from '@/features/reviews/components/ReviewList'
-import { LOCALITIES_BY_ID } from '@/lib/localities'
+import { ServiceAreas } from '@/features/localities/ServiceAreas'
 import type { Review } from '@/types/models'
 
 /** El botón grande de abajo: contactar, editar el propio perfil o entrar. */
@@ -96,16 +96,7 @@ export function ProfessionalPage() {
         </section>
       )}
 
-      {professional.serviceAreaIds.length > 1 && (
-        <section>
-          <h2 className="mb-1 font-semibold">Zonas donde trabaja</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            {professional.serviceAreaIds
-              .map((id) => LOCALITIES_BY_ID.get(id)?.name ?? id)
-              .join(' · ')}
-          </p>
-        </section>
-      )}
+      {professional.serviceAreaIds.length > 1 && <ServiceAreas ids={professional.serviceAreaIds} />}
 
       {professional.photos.length > 0 && (
         <section>

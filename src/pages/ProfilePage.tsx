@@ -8,7 +8,8 @@ import { FormSkeleton } from '@/components/ui/skeletons'
 import { logout } from '@/features/auth/api'
 import { updateUserProfile, uploadAvatar } from '@/features/auth/profileApi'
 import { useAuth } from '@/features/auth/useAuth'
-import { LOCALITIES, toLocalityRef } from '@/lib/localities'
+import { LocalitySelect } from '@/features/localities/LocalitySelect'
+import { toLocalityRef } from '@/lib/localities'
 import type { LocalityRef } from '@/types/models'
 import { NotificationsBell } from '@/features/notifications/NotificationsBell'
 
@@ -132,28 +133,13 @@ export function ProfilePage() {
         </label>
 
         <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="mi-localidad"
-            className="text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            Mi localidad
-          </label>
-          <select
-            id="mi-localidad"
-            value={locality?.id ?? ''}
-            onChange={(e) => {
-              const found = LOCALITIES.find((l) => l.id === e.target.value)
-              setLocality(found ? toLocalityRef(found) : null)
-            }}
-            className="h-11 rounded-xl border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900"
-          >
-            <option value="">Sin especificar</option>
-            {LOCALITIES.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name}
-              </option>
-            ))}
-          </select>
+          <LocalitySelect
+            label="Mi localidad"
+            value={locality?.id ?? null}
+            onChange={(found) => setLocality(found ? toLocalityRef(found) : null)}
+            placeholder="Sin especificar"
+            clearable
+          />
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

@@ -33,8 +33,8 @@ panel en `/admin`.
   texto y los rubros filtran ahí mismo y los resultados ocupan el lugar de la
   grilla de oficios. `/buscar` quedó solo como redirección a la raíz.
 - **Ubicación por localidad, nunca GPS preciso.** El botón "Detectar" usa el
-  GPS solo en el momento para adivinar el pueblo más cercano del catálogo.
-  Arranca por el Valle de Calamuchita.
+  GPS solo en el momento para adivinar el pueblo más cercano del catálogo,
+  que ahora cubre las 4037 localidades del país.
 - **La solicitud es el hilo conductor**: habilita el chat, libera el teléfono
   al aceptarse y, al completarse, habilita la reseña (una por solicitud).
 - **Los agregados los escriben Cloud Functions**, nunca el cliente
@@ -56,6 +56,17 @@ tramo de registro, perfil y contadores también contra producción:
 - Perfil profesional: oficios, zonas de trabajo, precios, fotos, pausar/activar.
 - Búsqueda desde la home por rubro, localidad y texto, con contador de
   disponibles por pueblo.
+- **Catálogo de localidades de todo el país**: las 4037 que publica la API
+  Georef del Estado (INDEC, IGN y BAHRA), regenerables con
+  `node scripts/fetch-localities.mjs > src/lib/data/localities.json`. Viaja en
+  su propio archivo (83 KB comprimidos) que el navegador baja recién cuando
+  hace falta elegir o adivinar un pueblo, así que el arranque de la app no
+  engordó. Las ocho de Calamuchita conservan su id viejo, para no migrar los
+  perfiles y solicitudes que ya están guardados. La colección `localities` de
+  Firestore quedó fuera del seed: no la leía nadie.
+- Se elige localidad buscando por nombre, no con un `<select>`: con cuatro mil
+  no se puede a dedo, y el desplegable nativo en modo oscuro se pintaba con
+  fondo claro y texto claro, ilegible.
 - Solicitud de presupuesto con matriz de transiciones de estado, validada
   también en las reglas de seguridad.
 - Chat en tiempo real, etiquetado por oficio y con filtro por oficio en la
@@ -165,16 +176,6 @@ Cuidado con los scripts de `scripts/`: sin `FIRESTORE_EMULATOR_HOST` y
   hoy quedan con el valor que tenían al crearse la conversación.
 - Historial de reseñas propias y "mis calificaciones" en el perfil.
 - Ordenar resultados por cercanía real, no solo por rating.
-- Ampliar el catálogo de localidades más allá de Calamuchita. Ya está resuelto
-  de dónde sacarlas: la **API Georef** del Estado (`apis.datos.gob.ar/georef`,
-  pública, gratuita y sin credenciales, sobre datos de INDEC, IGN y BAHRA)
-  devuelve las 4037 localidades del país en el mismo formato que usa la app.
-  `scripts/fetch-localities.mjs` las baja y las deja listas. Falta decidir dos
-  cosas antes de apretar el gatillo: el archivo pasa de 8 a 4037 entradas
-  (466 KB, 88 KB comprimido) y conviene cargarlo aparte del bundle o filtrarlo
-  por provincia; y los ids pasan a ser los de Georef, así que hay que migrar
-  `users.locality`, `professionals.serviceAreaIds` y `requests.locality`, que
-  hoy guardan slugs.
 - Tests de las pantallas que todavía no tienen: chat, detalle de solicitud,
   perfil profesional y panel de admin.
 - La búsqueda por texto se hace en memoria sobre los primeros 100 activos de

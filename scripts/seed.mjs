@@ -1,10 +1,13 @@
 /**
- * Sube el catálogo de oficios y localidades a Firestore.
+ * Sube el catálogo de oficios a Firestore.
  *
  *   npm run seed
  *
- * Lee los mismos JSON que usa la app (`src/lib/data`), así no hay dos listas
- * que mantener. Es idempotente: se puede correr cada vez que se agrega algo.
+ * Lee el mismo JSON que usa la app (`src/lib/data`), así no hay dos listas que
+ * mantener. Es idempotente: se puede correr cada vez que se agrega algo.
+ *
+ * Las localidades no se suben: son 4037 y nadie las lee desde Firestore. El
+ * catálogo vive en `src/lib/data/localities.json` y lo carga el navegador.
  */
 import { getFirestore } from 'firebase-admin/firestore'
 import { readFileSync } from 'node:fs'
@@ -16,7 +19,6 @@ const db = getFirestore()
 
 const read = (path) => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'))
 const categories = read('../src/lib/data/categories.json')
-const localities = read('../src/lib/data/localities.json')
 
 const batch = db.batch()
 
@@ -29,9 +31,5 @@ for (const category of categories) {
   )
 }
 
-for (const locality of localities) {
-  batch.set(db.doc(`localities/${locality.id}`), locality, { merge: true })
-}
-
 await batch.commit()
-console.log(`Listo en ${projectId}: ${categories.length} oficios y ${localities.length} localidades.`)
+console.log(`Listo en ${projectId}: ${categories.length} oficios.`)

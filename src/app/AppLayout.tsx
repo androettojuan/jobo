@@ -1,6 +1,8 @@
 import { Briefcase, ClipboardList, Home, MessageCircle, User } from 'lucide-react'
+import { useMemo } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
+import { readProfessionalHint } from '@/features/auth/professionalHint'
 import { useAuth } from '@/features/auth/useAuth'
 import { useUnreadChats } from '@/features/chat/useUnreadChats'
 import { ForegroundToast } from '@/features/notifications/ForegroundToast'
@@ -28,14 +30,20 @@ function Badge({ count }: { count: number }) {
 }
 
 export function AppLayout() {
-  const { profile } = useAuth()
+  const { profile, loading } = useAuth()
   const unreadChats = useUnreadChats()
   const { pathname } = useLocation()
 
   // El chat ocupa toda la pantalla: barra y encabezado estorban.
   const immersive = /^\/chats\/[^/]+$/.test(pathname)
 
-  const tabs = profile?.isProfessional
+  // Mientras el perfil viaja desde Firestore, la barra se guía por lo que pasó
+  // la última vez en este teléfono: así no se dibuja con cuatro pestañas para
+  // agregar una quinta a los pocos milisegundos.
+  const hint = useMemo(() => readProfessionalHint(), [])
+  const isProfessional = loading ? hint : Boolean(profile?.isProfessional)
+
+  const tabs = isProfessional
     ? [...BASE_TABS.slice(0, 2), WORK_TAB, ...BASE_TABS.slice(2)]
     : BASE_TABS
 

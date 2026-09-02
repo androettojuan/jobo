@@ -104,6 +104,9 @@ tramo de registro, perfil y contadores también contra producción:
   acentos y mayúsculas.
 - El teléfono marcado como público se muestra en la ficha; lo sincroniza una
   Cloud Function junto con el nombre y la foto.
+- La barra de abajo recuerda en `localStorage` si la última sesión de ese
+  teléfono ofrecía servicios, para no dibujarse con cuatro pestañas y sumar
+  "Mi trabajo" cuando llega el perfil desde Firestore.
 - La campana de avisos vive dentro del contenido de cada pantalla —en la home,
   al lado del logo—, así que acompaña el scroll en vez de quedar fija arriba.
 - El historial de avisos se puede vaciar desde la propia pantalla.

@@ -6,6 +6,7 @@ import { auth, db } from '@/lib/firebase'
 import type { User } from '@/types/models'
 
 import { AuthContext } from './AuthContext'
+import { writeProfessionalHint } from './professionalHint'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null)
         setIsAdmin(false)
         setLoading(false)
+        writeProfessionalHint(false)
         return
       }
       // El rol de admin vive en un custom claim, no en Firestore: así no se
@@ -38,8 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return onSnapshot(
       doc(db, 'users', firebaseUser.uid),
       (snap) => {
-        setProfile(snap.exists() ? (snap.data() as User) : null)
+        const user = snap.exists() ? (snap.data() as User) : null
+        setProfile(user)
         setLoading(false)
+        // Para que la próxima carga sepa de entrada si va la pestaña de trabajo.
+        writeProfessionalHint(Boolean(user?.isProfessional))
       },
       () => setLoading(false),
     )

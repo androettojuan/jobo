@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Con qué color dibuja el sistema los iconos de la barra de navegación de
+      abajo. La app se dibuja de punta a punta, así que detrás de esa barra se
+      ve el fondo del `body`: blanco en tema claro, `slate-950` en oscuro. Los
+      iconos tienen que contrastar con eso.
+
+      Va como recurso y no dentro del estilo para no tener que repetir el
+      estilo entero en `values-night/`.
+    -->
+    <bool name="light_navigation_bar">true</bool>
+</resources>

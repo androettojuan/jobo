@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- En tema oscuro el fondo detrás de la barra es `slate-950`. -->
+    <bool name="light_navigation_bar">false</bool>
+</resources>

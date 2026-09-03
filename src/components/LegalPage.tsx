@@ -20,7 +20,7 @@ export function LegalPage({
   children: ReactNode
 }) {
   return (
-    <div className="safe-top mx-auto flex min-h-full max-w-2xl flex-col gap-4 p-6 pb-16">
+    <div className="safe-top mx-auto flex h-full max-w-2xl flex-col gap-4 overflow-y-auto p-6 pb-16">
       <Link to="/" className="flex items-center gap-2 text-sm text-slate-500">
         <ArrowLeft className="size-4" aria-hidden />
         Volver a Jobo

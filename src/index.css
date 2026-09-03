@@ -22,7 +22,10 @@ body,
 }
 
 /* El scroll lo maneja el <main> del layout: si además scrollea la página,
-   aparecen dos barras y la barra inferior fija tiembla al desplazarse. */
+   aparecen dos barras y la barra inferior fija tiembla al desplazarse.
+   OJO: por esto, toda pantalla que viva FUERA del AppLayout —login, registro,
+   legales— tiene que traer su propio `h-full overflow-y-auto`, o queda
+   recortada sin poder desplazarse. */
 html,
 body {
   overflow: hidden;

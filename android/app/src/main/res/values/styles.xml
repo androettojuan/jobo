@@ -13,6 +13,17 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+
+        <!--
+          La barra de navegación de abajo, sin esto, se dibujaba blanca sobre
+          una app en tema oscuro: el tema de la aplicación es Light y de ahí
+          heredaba. Se deja transparente para que se vea el fondo de la app, se
+          desactiva el velo que Android le pone por su cuenta cuando el teléfono
+          usa los tres botones, y el color de los iconos sigue al tema.
+        -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:windowLightNavigationBar">@bool/light_navigation_bar</item>
     </style>
 
 

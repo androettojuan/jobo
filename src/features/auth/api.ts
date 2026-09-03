@@ -16,14 +16,20 @@ import { httpsCallable } from 'firebase/functions'
 import { auth, db, functions } from '@/lib/firebase'
 import { isNative } from '@/lib/platform'
 
-/** Crea users/{uid} si todavía no existe. Idempotente. */
+/**
+ * Crea users/{uid} si todavía no existe. Idempotente.
+ *
+ * Devuelve si lo creó: con Google y con Apple, "entrar" y "registrarse" son el
+ * mismo botón, y esto es lo único que distingue a alguien que recién llega de
+ * alguien que vuelve.
+ */
 async function ensureProfile(
   uid: string,
   data: { displayName: string; email: string; photoURL: string | null },
 ) {
   const ref = doc(db, 'users', uid)
   const snap = await getDoc(ref)
-  if (snap.exists()) return
+  if (snap.exists()) return false
 
   await setDoc(ref, {
     uid,
@@ -42,6 +48,8 @@ async function ensureProfile(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
+
+  return true
 }
 
 export async function registerWithEmail(params: {
@@ -73,12 +81,12 @@ export async function loginWithEmail(email: string, password: string) {
  * en ese momento, no se recupera nunca más.
  */
 async function finishProviderLogin(user: User, fallbackName?: string | null) {
-  await ensureProfile(user.uid, {
+  const isNew = await ensureProfile(user.uid, {
     displayName: user.displayName ?? fallbackName ?? 'Usuario',
     email: user.email ?? '',
     photoURL: user.photoURL,
   })
-  return user
+  return { user, isNew }
 }
 
 export async function loginWithGoogle() {

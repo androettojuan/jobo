@@ -12,12 +12,24 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('@/features/auth/api', () => ({
   registerWithEmail: async () => ({ uid: 'u1' }),
+  loginWithGoogle: async () => resultadoGoogle,
+  loginWithApple: async () => resultadoGoogle,
   authErrorMessage: () => 'error',
 }))
 
-vi.mock('@/features/auth/components/ProviderButtons', () => ({
-  ProviderButtons: () => null,
-}))
+/** Con Google, el botón del registro sirve igual para entrar. */
+let resultadoGoogle: { isNew: boolean } = { isNew: true }
+
+vi.mock('@/features/auth/components/ProviderButtons', async () => {
+  const { loginWithGoogle } = await import('@/features/auth/api')
+  return {
+    ProviderButtons: ({ onRun }: { onRun: (a: () => Promise<unknown>) => void }) => (
+      <button type="button" onClick={() => onRun(loginWithGoogle)}>
+        Continuar con Google
+      </button>
+    ),
+  }
+})
 
 const { RegisterPage } = await import('@/pages/RegisterPage')
 
@@ -51,6 +63,24 @@ describe('registro', () => {
     // Sin oficios ni zona no aparece en ninguna búsqueda: mandarlo a la home
     // lo dejaría registrado y a la vez invisible.
     expect(navegar).toHaveBeenCalledWith('/perfil/profesional?alta=1', { replace: true })
+  })
+
+  it('si la cuenta de Google ya existía, esto fue un login: va a la app', async () => {
+    resultadoGoogle = { isNew: false }
+    render(
+      <MemoryRouter>
+        <RegisterPage />
+      </MemoryRouter>,
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /ofrezco mis servicios/i }))
+    await userEvent.click(screen.getByRole('checkbox'))
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar con Google' }))
+
+    // Lo elegido acá no significa nada para alguien que ya tenía cuenta, y
+    // mandarlo al alta le diría que le falta un paso que ya dio.
+    expect(navegar).toHaveBeenCalledWith('/', { replace: true })
+    resultadoGoogle = { isNew: true }
   })
 
   it('arranca en "busco a alguien", que es el caso común', () => {

@@ -20,6 +20,7 @@ import { ProfessionalEditPage } from '@/pages/ProfessionalEditPage'
 import { ProfessionalPage } from '@/pages/ProfessionalPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { WelcomePage } from '@/pages/WelcomePage'
 import { RequestDetailPage } from '@/pages/RequestDetailPage'
 import { RequestsPage } from '@/pages/RequestsPage'
 import { ReviewPage } from '@/pages/ReviewPage'
@@ -55,6 +56,9 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
+          // Solo la ve quien acaba de crear la cuenta con Google o con Apple
+          // desde la pantalla de login, donde no está la pregunta del registro.
+          { path: '/bienvenida', element: <WelcomePage /> },
           { path: '/solicitudes', element: <RequestsPage /> },
           { path: '/solicitudes/:requestId', element: <RequestDetailPage /> },
           { path: '/solicitudes/:requestId/resena', element: <ReviewPage /> },

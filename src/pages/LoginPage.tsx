@@ -24,8 +24,12 @@ export function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      await action()
-      navigate(from, { replace: true })
+      const resultado = await action()
+      // Con Google y con Apple este botón también crea la cuenta. A quien
+      // recién llega hay que preguntarle a qué vino: la pregunta del registro
+      // no la vio, porque no pasó por el registro.
+      const recienCreada = (resultado as { isNew?: boolean } | undefined)?.isNew === true
+      navigate(recienCreada ? '/bienvenida' : from, { replace: true })
     } catch (err) {
       setError(authErrorMessage(err))
     } finally {

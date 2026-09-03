@@ -21,11 +21,16 @@ export function RegisterPage() {
     setError('')
     setLoading(true)
     try {
-      await action()
+      const resultado = await action()
+      // Con Google y con Apple el botón sirve igual para entrar: si la cuenta
+      // ya existía, esto fue un login y lo elegido acá no significa nada.
+      const yaExistia = (resultado as { isNew?: boolean } | undefined)?.isNew === false
+
       // Quien viene a ofrecer servicios entra directo a completar su perfil:
       // sin oficios ni zona no aparece en ninguna búsqueda, así que mandarlo a
       // la home sería dejarlo registrado y a la vez invisible.
-      navigate(role === 'profesional' ? '/perfil/profesional?alta=1' : '/', { replace: true })
+      const destino = role === 'profesional' && !yaExistia ? '/perfil/profesional?alta=1' : '/'
+      navigate(destino, { replace: true })
     } catch (err) {
       setError(authErrorMessage(err))
     } finally {

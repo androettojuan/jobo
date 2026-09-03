@@ -36,6 +36,9 @@ async function ensureProfile(
     isProfessional: false,
     fcmTokens: [],
     disabled: false,
+    // Cuándo aceptó los términos. Apple pide que se acepten antes de publicar
+    // nada, y si algún día cambian hay que saber quién vio cuál versión.
+    acceptedTermsAt: serverTimestamp(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })

@@ -1,4 +1,4 @@
-import { Briefcase, Camera, LogOut, Shield } from 'lucide-react'
+import { Briefcase, Camera, FileText, Lock, LogOut, Shield } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -160,6 +160,14 @@ export function ProfilePage() {
             Panel de administración
           </Link>
         )}
+        <Link to="/privacidad" className="flex items-center gap-3 py-3">
+          <Lock className="size-5 text-slate-400" aria-hidden />
+          Política de privacidad
+        </Link>
+        <Link to="/terminos" className="flex items-center gap-3 py-3">
+          <FileText className="size-5 text-slate-400" aria-hidden />
+          Términos y condiciones
+        </Link>
       </nav>
 
       <Button

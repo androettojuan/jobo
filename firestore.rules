@@ -28,7 +28,10 @@ service cloud.firestore {
       // mostrar nombre y foto en chats y reseñas.
       allow read: if signedIn();
       allow create: if isSelf(uid);
-      allow update: if isAdmin() || (isSelf(uid) && unchanged(['disabled', 'createdAt']));
+      // `acceptedTermsAt` se escribe una vez, al crear la cuenta: si el
+      // cliente pudiera reescribirlo, no serviría como constancia de nada.
+      allow update: if isAdmin()
+        || (isSelf(uid) && unchanged(['disabled', 'createdAt', 'acceptedTermsAt']));
       allow delete: if false;
 
       match /notifications/{notificationId} {

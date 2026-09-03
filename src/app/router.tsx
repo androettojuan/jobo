@@ -8,6 +8,9 @@ import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
 import { ChatPage } from '@/pages/ChatPage'
 import { ChatsPage } from '@/pages/ChatsPage'
 import { HomePage } from '@/pages/HomePage'
+import { DeleteAccountInfoPage } from '@/pages/legal/DeleteAccountInfoPage'
+import { PrivacyPage } from '@/pages/legal/PrivacyPage'
+import { TermsPage } from '@/pages/legal/TermsPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { NotificationsPage } from '@/pages/NotificationsPage'
@@ -30,6 +33,12 @@ import { ProtectedRoute } from './ProtectedRoute'
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
   { path: '/registro', element: <RegisterPage />, errorElement: <RouteError /> },
+  // Legales: fuera del layout de la app y sin sesión. Sus URLs se declaran en
+  // las fichas de las tiendas y tienen que abrirse desde cualquier navegador,
+  // aunque quien entre no tenga la app instalada.
+  { path: '/privacidad', element: <PrivacyPage />, errorElement: <RouteError /> },
+  { path: '/terminos', element: <TermsPage />, errorElement: <RouteError /> },
+  { path: '/eliminar-cuenta', element: <DeleteAccountInfoPage />, errorElement: <RouteError /> },
   {
     element: <AppLayout />,
     // Cualquier error de render dentro de la app cae acá y no en el cartel

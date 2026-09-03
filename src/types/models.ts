@@ -64,6 +64,8 @@ export interface User {
   fcmTokens: FcmToken[]
   /** Bloqueo administrativo. */
   disabled: boolean
+  /** Cuándo aceptó los términos. Las cuentas viejas no lo tienen. */
+  acceptedTermsAt?: Timestamp
   createdAt: Timestamp
   updatedAt: Timestamp
 }

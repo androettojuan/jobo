@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { DashboardSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/features/auth/useAuth'
 import { NotificationsBell } from '@/features/notifications/NotificationsBell'
+import { AvailabilityToggle } from '@/features/professionals/components/AvailabilityToggle'
 import { CategoryFilter } from '@/features/professionals/components/CategoryFilter'
 import { DashboardStats } from '@/features/professionals/components/DashboardStats'
 import { ReceivedRequests } from '@/features/professionals/components/ReceivedRequests'
@@ -88,11 +89,6 @@ export function ProfessionalDashboardPage() {
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold">Mi trabajo</h1>
-          <p className="text-sm text-slate-500">
-            {professional.status === 'active'
-              ? 'Estás visible en las búsquedas'
-              : 'Tu perfil está en pausa: no aparecés en las búsquedas'}
-          </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Link to="/perfil/profesional">
@@ -104,6 +100,12 @@ export function ProfessionalDashboardPage() {
           <NotificationsBell />
         </div>
       </header>
+
+      <AvailabilityToggle
+        uid={professional.uid}
+        status={professional.status}
+        onChange={(status) => setProfessional({ ...professional, status })}
+      />
 
       <DashboardStats professional={professional} pending={pending} active={active} />
 

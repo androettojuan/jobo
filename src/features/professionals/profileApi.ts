@@ -14,6 +14,18 @@ export interface ProfessionalDraft {
   status: ProfessionalStatus
 }
 
+/**
+ * Prende o apaga la disponibilidad, sin pasar por el formulario entero.
+ *
+ * Pausar solo saca de las búsquedas (`searchProfessionals` filtra por
+ * `status == 'active'`). Los chats abiertos, las solicitudes en curso y las
+ * calificaciones quedan intactos: no es dar de baja el perfil, es dejar de
+ * aparecer mientras no podés tomar trabajo.
+ */
+export function setProfessionalStatus(uid: string, status: ProfessionalStatus) {
+  return updateDoc(doc(db, 'professionals', uid), { status, updatedAt: serverTimestamp() })
+}
+
 export async function getMyProfessional(uid: string) {
   const snap = await getDoc(doc(db, 'professionals', uid))
   return snap.exists() ? (snap.data() as Professional) : null

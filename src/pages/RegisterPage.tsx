@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { authErrorMessage, registerWithEmail } from '@/features/auth/api'
 import { ProviderButtons } from '@/features/auth/components/ProviderButtons'
+import { RoleChoice, type Role } from '@/features/auth/components/RoleChoice'
 
 export function RegisterPage() {
   const navigate = useNavigate()
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [role, setRole] = useState<Role>('cliente')
   const [acepta, setAcepta] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,7 +22,10 @@ export function RegisterPage() {
     setLoading(true)
     try {
       await action()
-      navigate('/', { replace: true })
+      // Quien viene a ofrecer servicios entra directo a completar su perfil:
+      // sin oficios ni zona no aparece en ninguna búsqueda, así que mandarlo a
+      // la home sería dejarlo registrado y a la vez invisible.
+      navigate(role === 'profesional' ? '/perfil/profesional?alta=1' : '/', { replace: true })
     } catch (err) {
       setError(authErrorMessage(err))
     } finally {
@@ -48,6 +53,8 @@ export function RegisterPage() {
         </header>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <RoleChoice value={role} onChange={setRole} />
+
           <Input
             label="Nombre y apellido"
             autoComplete="name"

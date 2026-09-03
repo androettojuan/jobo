@@ -1,6 +1,6 @@
 import { ArrowLeft, Plus } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { PhotoPicker } from '@/components/PhotoPicker'
 import { Button } from '@/components/ui/Button'
@@ -19,7 +19,6 @@ import { CATEGORIES } from '@/lib/categories'
 import { LocalitySelect } from '@/features/localities/LocalitySelect'
 import { ServiceAreaPicker } from '@/features/localities/ServiceAreaPicker'
 import { toLocalityRef } from '@/lib/localities'
-import type { ProfessionalStatus } from '@/types/models'
 
 const MAX_CATEGORIES = 5
 
@@ -38,6 +37,11 @@ const EMPTY: ProfessionalDraft = {
 export function ProfessionalEditPage() {
   const { firebaseUser, profile } = useAuth()
   const navigate = useNavigate()
+  // `?alta=1` lo pone el registro de quien eligió ofrecer servicios: la misma
+  // pantalla, pero explicando por qué está acá y sin un "volver" que lo mande
+  // a un perfil que todavía no miró.
+  const [params] = useSearchParams()
+  const esAlta = params.get('alta') === '1'
 
   const [draft, setDraft] = useState<ProfessionalDraft>(EMPTY)
   const [loading, setLoading] = useState(true)
@@ -137,6 +141,13 @@ export function ProfessionalEditPage() {
         },
         draft,
       )
+      // Al terminar el alta se va al panel: es donde va a ver las solicitudes
+      // que empiecen a llegar, y dejarlo en el formulario que acaba de
+      // completar no le dice que ya está listo.
+      if (esAlta) {
+        navigate('/mi-trabajo', { replace: true })
+        return
+      }
       setSaved(true)
     } catch {
       setError('No pudimos guardar los cambios. Probá de nuevo.')
@@ -154,14 +165,20 @@ export function ProfessionalEditPage() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6 p-4">
-      <Link to="/perfil" className="flex items-center gap-1 text-sm text-slate-500">
-        <ArrowLeft className="size-4" aria-hidden /> Mi perfil
-      </Link>
+      {!esAlta && (
+        <Link to="/perfil" className="flex items-center gap-1 text-sm text-slate-500">
+          <ArrowLeft className="size-4" aria-hidden /> Mi perfil
+        </Link>
+      )}
 
       <header>
-        <h1 className="text-2xl font-bold">Mi perfil profesional</h1>
+        <h1 className="text-2xl font-bold">
+          {esAlta ? 'Contanos qué hacés' : 'Mi perfil profesional'}
+        </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Así te van a ver las personas que buscan un profesional en tu zona.
+          {esAlta
+            ? 'Un último paso: hasta que completes esto no aparecés en las búsquedas. Podés cambiarlo cuando quieras.'
+            : 'Así te van a ver las personas que buscan un profesional en tu zona.'}
         </p>
       </header>
 
@@ -254,21 +271,6 @@ export function ProfessionalEditPage() {
           `users/${firebaseUser?.uid}/work/${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`
         }
       />
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="status" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Estado
-        </label>
-        <select
-          id="status"
-          value={draft.status}
-          onChange={(e) => patch({ status: e.target.value as ProfessionalStatus })}
-          className="h-11 rounded-xl border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900"
-        >
-          <option value="active">Disponible: aparezco en las búsquedas</option>
-          <option value="paused">En pausa: no aparezco por ahora</option>
-        </select>
-      </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
       {saved && <p className="text-sm text-emerald-600">Perfil guardado.</p>}

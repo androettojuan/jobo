@@ -6,7 +6,7 @@ import { auth, db } from '@/lib/firebase'
 import type { User } from '@/types/models'
 
 import { AuthContext } from './AuthContext'
-import { writeProfessionalHint } from './professionalHint'
+import { writeProfessionalHint, writeSignedInHint } from './sessionHints'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)
@@ -17,6 +17,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     return onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user)
+      // Para que el próximo arranque sepa de entrada si va la campana o el
+      // enlace de entrar, en vez de dibujar uno y cambiarlo por el otro.
+      writeSignedInHint(Boolean(user))
       if (!user) {
         setProfile(null)
         setIsAdmin(false)

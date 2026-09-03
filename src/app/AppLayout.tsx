@@ -2,7 +2,7 @@ import { Briefcase, ClipboardList, Home, MessageCircle, User } from 'lucide-reac
 import { useMemo } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
-import { readProfessionalHint } from '@/features/auth/professionalHint'
+import { readProfessionalHint } from '@/features/auth/sessionHints'
 import { useAuth } from '@/features/auth/useAuth'
 import { useUnreadChats } from '@/features/chat/useUnreadChats'
 import { ForegroundToast } from '@/features/notifications/ForegroundToast'

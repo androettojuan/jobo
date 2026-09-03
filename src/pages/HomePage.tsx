@@ -13,7 +13,7 @@ import { useProfessionalSearch } from '@/features/professionals/useProfessionalS
 import { CATEGORIES_BY_ID } from '@/lib/categories'
 
 export function HomePage() {
-  const { firebaseUser, profile } = useAuth()
+  const { firebaseUser, profile, loading: authLoading } = useAuth()
   const locality = useLocalityStore((s) => s.locality)
   const { counts, empty } = useCategoryCounts(locality?.id)
 
@@ -34,7 +34,7 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <HomeHeader signedIn={Boolean(firebaseUser)} profile={profile} />
+      <HomeHeader signedIn={Boolean(firebaseUser)} loading={authLoading} profile={profile} />
 
       <LocalityPicker />
 

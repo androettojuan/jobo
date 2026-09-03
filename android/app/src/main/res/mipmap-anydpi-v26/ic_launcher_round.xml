@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Icono adaptativo: el lanzador recorta estas dos capas con la forma que
+  elija (círculo, cuadrado redondeado, gota).
+
+  El fondo va sin `inset` a propósito. La herramienta lo genera con un 16.7%
+  de margen, que alcanza justo para tapar el área visible pero deja las
+  esquinas transparentes: en los lanzadores que mueven el icono con el dedo o
+  lo agrandan al abrirlo, ese borde se ve. El fondo tiene que llenar la capa
+  entera.
+
+  La capa de adelante tampoco lleva `inset`: la "J" ya ocupa el 57% central de
+  su imagen, dentro de la zona que ningún recorte se come. Con el margen
+  encima quedaría en el 38% y se vería diminuta.
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background"/>
-    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+    <background android:drawable="@mipmap/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
 </adaptive-icon>

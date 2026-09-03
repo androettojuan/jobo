@@ -25,7 +25,13 @@ export const onReviewWritten = onDocumentWritten('reviews/{reviewId}', async (ev
   const ratingAvg =
     ratingCount === 0 ? 0 : Math.round((ratings.reduce((a, b) => a + b, 0) / ratingCount) * 10) / 10
 
-  await db.doc(`professionals/${professionalId}`).update({
+  // Al borrar una cuenta se borran primero sus reseñas y después su perfil,
+  // pero estos triggers son asincrónicos y pueden llegar en el otro orden.
+  // Sin esta guarda, el recálculo explota contra un perfil que ya no está.
+  const professional = db.doc(`professionals/${professionalId}`)
+  if (!(await professional.get()).exists) return
+
+  await professional.update({
     ratingAvg,
     ratingCount,
     updatedAt: FieldValue.serverTimestamp(),

@@ -11,8 +11,9 @@ import {
   type User,
 } from 'firebase/auth'
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 
-import { auth, db } from '@/lib/firebase'
+import { auth, db, functions } from '@/lib/firebase'
 import { isNative } from '@/lib/platform'
 
 /** Crea users/{uid} si todavía no existe. Idempotente. */
@@ -117,6 +118,23 @@ export async function logout() {
   // elegir otra.
   if (isNative) await FirebaseAuthentication.signOut()
   await signOut(auth)
+}
+
+/**
+ * Borra la cuenta y todo lo que cuelga de ella.
+ *
+ * Va por Cloud Function porque el cliente no puede tocar ni la mitad de lo
+ * que hay que limpiar: reseñas ajenas, chats compartidos, denuncias. Lo que
+ * es de a dos se anonimiza en vez de borrarse, para no romperle el historial
+ * a la otra persona.
+ *
+ * Al terminar, la sesión ya no vale: se cierra para que la app no quede
+ * mostrando datos de una cuenta que no existe.
+ */
+export async function deleteAccount() {
+  const callable = httpsCallable<void, { ok: boolean }>(functions, 'deleteAccount')
+  await callable()
+  await logout()
 }
 
 /** Traduce los códigos de Firebase Auth a mensajes que se le pueden mostrar a alguien. */

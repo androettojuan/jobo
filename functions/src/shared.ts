@@ -20,6 +20,7 @@ export type NotificationType =
   | 'request_accepted'
   | 'request_rejected'
   | 'request_completed'
+  | 'request_cancelled'
   | 'message_received'
   | 'review_received'
 

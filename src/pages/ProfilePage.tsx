@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { PhotoInput } from '@/components/ui/PhotoInput'
 import { FormSkeleton } from '@/components/ui/skeletons'
 import { logout } from '@/features/auth/api'
+import { DeleteAccount } from '@/features/auth/components/DeleteAccount'
 import { updateUserProfile, uploadAvatar } from '@/features/auth/profileApi'
 import { useAuth } from '@/features/auth/useAuth'
 import { LocalitySelect } from '@/features/localities/LocalitySelect'
@@ -171,6 +172,8 @@ export function ProfilePage() {
         <LogOut className="size-4" aria-hidden />
         Cerrar sesión
       </Button>
+
+      <DeleteAccount />
     </div>
   )
 }

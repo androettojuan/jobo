@@ -42,65 +42,68 @@ falten pulidos.
 
 ---
 
-## Fase 0 — Lo que bloquea la publicación aunque el código funcione
+## Fase 0 — Lo que bloquea la publicación aunque el código funcione ✔ hecho
 
-Nada de esto es técnico-nativo: son requisitos de política que hoy la app **no
-cumple**, y que rechazan la publicación de entrada.
+Nada de esto es técnico-nativo: son requisitos de política. Al 3 de septiembre
+de 2026 están los tres cubiertos; queda solo llenar los formularios de cada
+tienda (0.4), que es trabajo de consola, no de código.
 
-### 0.1 Borrado de cuenta (bloqueante en las dos tiendas)
+### 0.1 Borrado de cuenta ✔
 
-Google Play (política de Data Deletion) y Apple (guía 5.1.1 v) exigen que quien
-se registró pueda **borrar su cuenta y sus datos desde adentro de la app**, y
-Google exige además una **URL pública** donde pedirlo sin instalar nada.
+`functions/src/account.ts` (`deleteAccount`, callable) y el botón al final de
+`/perfil`, que pide escribir ELIMINAR.
 
-- Botón "Eliminar mi cuenta" en `/perfil`, con confirmación y reautenticación
-  (Firebase pide credencial fresca para borrar).
-- Cloud Function `deleteAccount` que borre en cascada: `users/{uid}` y sus
-  subcolecciones, `professionals/{uid}`, tokens FCM, fotos en Storage, y que
-  **anonimice** lo que no se puede borrar sin romper a terceros (reseñas
-  escritas, mensajes en chats ajenos, solicitudes cerradas) → "Usuario
-  eliminado", sin nombre, foto ni teléfono.
-- Recalcular los agregados que quedan colgando (`ratingAvg`, contadores de
-  `stats/categories`).
-- Página web `/eliminar-cuenta` explicando el procedimiento, accesible sin
-  sesión, para el formulario de Play.
+Lo propio se borra; lo que es de a dos se anonimiza. Un chat, una reseña o una
+solicitud no son solo de quien se va: borrarlos le rompería el historial a la
+otra persona, y sacar una calificación le cambiaría el promedio a un
+profesional por algo que no hizo. Las solicitudes abiertas se cancelan y se le
+avisa al otro, con el tipo `request_cancelled` que se sumó para eso.
 
-### 0.2 Política de privacidad y términos (bloqueante)
+La cuenta de Auth se borra **al final** a propósito: si algo falla antes, la
+persona sigue pudiendo entrar y reintentar en vez de quedarse sin cuenta y con
+los datos a medio borrar.
 
-- Política de privacidad en una URL pública y estable (puede vivir en el mismo
-  hosting: `/privacidad`). Tiene que decir qué se recolecta —email, nombre,
-  teléfono, localidad, fotos, token de dispositivo—, para qué, con quién se
-  comparte (Firebase/Google) y cómo se borra.
-- Términos y condiciones (`/terminos`), con el EULA que Apple exige para
-  contenido generado por usuarios.
-- Enlaces a ambas desde el registro y desde `/perfil`.
-- Email de contacto de soporte, visible en la app y en las fichas de tienda.
+Se probó contra los emuladores con un escenario de a dos y 19 comprobaciones
+sobre qué se borró, qué quedó anonimizado y qué no se tocó.
 
-### 0.3 Contenido generado por usuarios (bloqueante en Apple)
+En vez de reautenticar se pide escribir una palabra. Firebase no exige
+credencial fresca porque el borrado lo hace el Admin SDK, y forzar un
+`auth_time` reciente dejaba sin salida a quien entró con Google hace rato
+—incluido el revisor de la tienda probando justo esto—.
 
-La guía 1.2 de Apple pide cuatro cosas para apps con contenido de usuarios.
-Jobo tiene dos:
+`/eliminar-cuenta` cubre lo que el botón no cubre: la URL pública que pide
+Google Play para pedir el borrado sin instalar nada.
 
-- ✅ Denunciar contenido ofensivo (ya está: denuncias de perfiles y reseñas).
+### 0.2 Política de privacidad y términos ✔
+
+`/privacidad`, `/terminos` y `/eliminar-cuenta`, fuera del `AppLayout` para que
+se abran desde cualquier navegador sin sesión. El contacto y la edad mínima
+salen de `src/lib/contacto.ts`, un solo lugar.
+
+**Falta que las lea un abogado.** Lo que hay describe con precisión lo que la
+app hace, pero no es una opinión legal.
+
+### 0.3 Contenido generado por usuarios ✔
+
+Las cuatro cosas que pide la guía 1.2 de Apple:
+
+- ✅ Denunciar contenido ofensivo (ya estaba).
 - ✅ Moderación por parte del equipo (panel de admin).
-- ❌ **Bloquear usuarios abusivos**: falta. Hay que agregar "Bloquear a esta
-  persona" —que impida que le escriba, le pida presupuesto y la vea— con su
-  lista en el perfil para desbloquear, más las reglas de Firestore que lo hagan
-  cumplir del lado del servidor.
-- ❌ **Aceptar los términos antes de publicar contenido**: un checkbox en el
-  registro, guardado con fecha.
+- ✅ **Bloquear usuarios**: `src/features/blocks/`, y lo hacen cumplir las
+  reglas de Firestore, no la pantalla. Corta en las dos direcciones y tiene 9
+  tests.
+- ✅ **Aceptar los términos antes de publicar**: checkbox en el registro, con
+  constancia en `acceptedTermsAt` que el cliente no puede reescribir.
 
-También hay que comprometerse a moderar denuncias **dentro de las 24 horas**;
-conviene un aviso por email al admin cuando entra una denuncia.
+Queda pendiente el compromiso de moderar denuncias **dentro de las 24 horas**:
+hoy `onReportCreated` solo deja una línea en los logs. Conviene un aviso por
+email al admin, o revisar el panel a diario.
 
-### 0.4 Formularios de datos de cada tienda
+### 0.4 Formularios de datos de cada tienda — pendiente
 
-- **Play – Data Safety**: declarar email, nombre, teléfono, ubicación
-  aproximada, fotos, mensajes e identificadores de dispositivo; cifrado en
-  tránsito; y que se pueden borrar.
-- **Apple – Privacy Nutrition Labels**: lo mismo, con el mapeo de qué se usa
-  para "funcionalidad de la app" y qué se vincula a la identidad.
-- Clasificación de edad: 17+ / PEGI 12 es lo razonable por el chat libre.
+Es lo único de la Fase 0 que queda, y es trabajo de consola. Las respuestas ya
+están redactadas en `FICHAS-TIENDA.md`, sacadas del modelo de datos real: qué
+se recolecta, con qué finalidad y qué se vincula a la identidad.
 
 ---
 
@@ -161,40 +164,41 @@ compilar con una bandera (`VITE_TARGET=native`) que:
   la app ya está instalada y se actualiza por la tienda),
 - registre el FCM nativo en vez del service worker de push.
 
-### Falta probarlo en un teléfono
-
-El APK compila, pero todavía no se instaló en un equipo real. Lo que hay que
-mirar apenas se pueda: que la barra de estado no tape el contenido, que la
-splash no se quede pegada, que el botón atrás no cierre la app de golpe y que
-el teclado no tape el input del chat.
+Probado en un Android real: arranca, la splash se va sola y el botón atrás
+navega en vez de cerrar la app.
 
 ## Fase 2 — Reemplazar las APIs web por plugins nativos
 
 Cada una de estas **no funciona** tal cual está dentro del contenedor, o
 funciona peor.
 
-**Estado al 2 de septiembre de 2026**: el código de 2.1, 2.2 y 2.3 está
-escrito y compila, pero **no se probó todavía**, porque falta el
-`google-services.json` del proyecto Firebase. Sin ese archivo la app nativa no
-puede ni inicializar Firebase. 2.4 y 2.5 siguen pendientes.
+**Estado al 3 de septiembre de 2026**: todo escrito. El login con Google está
+**probado y andando** en un Android real; el resto compila pero no se ejercitó
+de punta a punta. Lo de iOS no corrió nunca.
 
-#### Lo que falta hacer en Firebase Console
+#### Firebase Console — hecho para Android
 
-En el proyecto `jobo-8b688`, *Configuración del proyecto → Tus apps*:
+La app Android existe en `jobo-8b688`
+(`1:891114567956:android:b96c9e260e44523de06a01`, paquete `com.jobo.app`), con
+las huellas SHA-1 y SHA-256 del **keystore de debug** cargadas y
+`google-services.json` en `android/app/`. Todo se hizo por CLI:
 
-1. **Agregar app Android** con el paquete `com.jobo.app`.
-2. Cargarle la huella **SHA-1 del keystore de debug**, sin la cual el login con
-   Google falla con un error opaco:
-   `A4:04:6D:D6:07:3B:E5:C5:F4:EB:0D:2C:E7:64:E1:F1:AC:7D:98:A8`
-   (sale de `keytool -list -v -keystore ~/.android/debug.keystore -alias
-   androiddebugkey -storepass android`). La del keystore de release se suma
-   cuando exista, junto con la que agrega Play App Signing.
-3. Bajar `google-services.json` y dejarlo en `android/app/`.
-4. Para iOS, más adelante: agregar la app con el mismo bundle id, bajar
-   `GoogleService-Info.plist` a `ios/App/App/`, y habilitar el proveedor Apple
-   en *Authentication → Sign-in method*.
+```bash
+npx firebase apps:create ANDROID "Jobo Android" --package-name com.jobo.app
+npx firebase apps:android:sha:create <appId> <SHA>
+npx firebase apps:sdkconfig ANDROID <appId> --out android/app/google-services.json
+```
 
-### 2.1 Login con Google — escrito, sin probar
+De ahí sale el recurso `default_web_client_id`, sin el cual Google no devuelve
+token de identidad y el login falla con un error opaco. Lo mismo pasa si falta
+la huella del keystore que firmó el APK: **cuando exista el de release hay que
+sumar su SHA-1**, y la que agrega Play App Signing.
+
+Para iOS falta: agregar la app con el mismo bundle id, bajar
+`GoogleService-Info.plist` a `ios/App/App/`, habilitar el proveedor Apple en
+*Authentication → Sign-in method* y subir la clave APNs.
+
+### 2.1 Login con Google ✔ probado
 
 `signInWithPopup` no abre nada en un WebView. Se pasó a
 `@capacitor-firebase/authentication`, que hace el login nativo y devuelve un
@@ -227,7 +231,7 @@ siempre.
 
 Falta habilitar el proveedor en Firebase Auth y la capability en Xcode.
 
-### 2.3 Push — escrito, sin probar
+### 2.3 Push — desplegado, falta confirmarlo con la app cerrada
 
 El circuito anterior —service worker web + `getToken` con clave VAPID— es
 exclusivo del navegador. Lo que quedó:
@@ -262,39 +266,57 @@ exclusivo del navegador. Lo que quedó:
   Push Notifications y Background Modes en Xcode. Sin eso no llega un solo
   aviso, y no avisa: falla en silencio.
 
-### 2.4 Cámara y fotos
+### 2.4 Cámara y fotos ✔ escrito, sin probar
 
-`<input type="file">` funciona en ambos WebViews, pero la experiencia nativa es
-mejor y evita rarezas de iOS. Con `@capacitor/camera` se elige entre cámara y
-galería, y se conserva la compresión que ya hace `PhotoPicker`.
+`<input type="file">` funciona en ambos WebViews, pero abre el explorador de
+archivos: para mandar una foto en un chat lo que hace falta es la cámara.
+`src/components/ui/PhotoInput.tsx` es el mismo disparador para los tres lugares
+donde se elige una foto y se ramifica por plataforma; la compresión que ya
+hacía `uploadImage` no cambió.
 
 Textos de permiso obligatorios en `Info.plist` —Apple rechaza si faltan o si son
 genéricos—: `NSCameraUsageDescription` y `NSPhotoLibraryUsageDescription`,
 explicando en castellano para qué se usan.
 
-### 2.5 Ubicación
+### 2.5 Ubicación ✔ escrito, sin probar
 
-El "Detectar" de `src/lib/localities.ts` usa `navigator.geolocation`, que en
-WebView necesita que el contenedor conceda el permiso del sistema. Con
-`@capacitor/geolocation` se resuelve solo. Hace falta:
+El "Detectar" de `src/lib/localities.ts` usa `navigator.geolocation`, que existe
+en el WebView pero cuyo permiso lo concede el sistema operativo: sin plugin,
+nadie lo pide. Con `@capacitor/geolocation` se resuelve, y `detectLocality` pasó
+de un constructor de promesa a `async` para que la rama por plataforma no lo
+volviera ilegible.
 
-- Android: `ACCESS_COARSE_LOCATION` en el manifiesto (alcanza la aproximada, que
-  es todo lo que Jobo usa; pedir la fina obliga a justificarla en Play).
-- iOS: `NSLocationWhenInUseUsageDescription`.
+Se pide **solo la aproximada** (`ACCESS_COARSE_LOCATION`, sin la fina): es todo
+lo que hace falta para adivinar el pueblo y evita tener que justificar la
+precisa ante Google Play. Los textos del `Info.plist` están en castellano.
 
-### 2.6 Comportamientos de plataforma
+### 2.6 Comportamientos de plataforma ✔
 
-- **Botón atrás de Android**: sin manejarlo, cierra la app desde cualquier
-  pantalla. Hay que engancharlo al historial del router y salir solo desde la
-  home, con el doble toque de siempre.
-- **Barra de estado**: `@capacitor/status-bar` con el verde de la marca y estilo
-  claro/oscuro según el tema.
-- **Splash screen**: `@capacitor/splash-screen`, ocultándola cuando la app está
-  lista, para que no se vea el flash blanco del WebView.
-- **Teclado**: `@capacitor/keyboard` para que el input del chat no quede tapado.
-- Las `safe-top` / `safe-bottom` que ya usa `AppLayout` siguen sirviendo.
+Todo en `src/lib/native.ts`, salvo lo que es de tema: botón atrás enganchado al
+historial del router, barra de estado de punta a punta siguiendo el tema del
+sistema, splash escondida recién cuando la app está montada y teclado que
+empuja el WebView.
 
-## Fase 3 — Identidad, íconos y firma
+Dibujar de punta a punta destapó tres cosas que no se ven en el navegador:
+
+- El `pb-20` fijo no alcanza. La barra de abajo mide su alto **más** lo que el
+  sistema reserve, y en un teléfono con los tres botones eso son casi 50px más:
+  el último botón de cada pantalla quedaba cortado. De ahí `.pb-nav`.
+- El contenido pasaba por abajo de la hora y la batería al scrollear, porque no
+  hay nada pintado en ese hueco. De ahí `.status-scrim`.
+- La barra de navegación de Android se dibujaba blanca sobre la app en oscuro:
+  el tema de la aplicación es `Theme.AppCompat.Light` y de ahí heredaba el
+  color de los iconos. Se controla explícitamente con un `bool` que cambia en
+  `values-night`.
+
+Y una que no es de plataforma pero se ve igual: `html` y `body` tienen
+`overflow: hidden` porque el scroll lo maneja el `<main>` del `AppLayout`. Toda
+pantalla que viva **fuera** de ese layout —login, registro, legales— necesita
+su propio `h-full overflow-y-auto`, o queda recortada. Y el contenedor que
+scrollea no puede ser el mismo que centra con `justify-center`: en una pantalla
+corta, lo que se pasa por arriba queda inalcanzable.
+
+## Fase 3 — Identidad, íconos y firma — a medias
 
 - `@capacitor/assets` genera todos los tamaños de ícono y splash desde el SVG.
   Android necesita **ícono adaptativo** (capa de fondo + capa de primer plano);
@@ -308,11 +330,33 @@ WebView necesita que el contenedor conceda el permiso del sistema. Con
   use Play App Signing, que conviene activar por eso mismo.
 - **iOS**: certificados y perfiles de aprovisionamiento en el portal de Apple,
   o dejar que Xcode los administre.
-- Versionado: `versionCode` / `versionName` en `android`, `CFBundleVersion` /
-  `CFBundleShortVersionString` en iOS. Conviene un script que los tome del
-  `package.json` para no desincronizarlos a mano.
+- Versionado: `node scripts/set-version.mjs <version> [--build N]` pone la
+  misma en `package.json`, Android e iOS. El build nunca puede bajar: Play
+  rechaza un AAB con un `versionCode` ya usado y App Store Connect hace lo
+  mismo. Va en **1.0.0, build 1**.
+
+**Hecho**: los iconos y la splash de las dos plataformas, generados desde el
+mismo SVG del que salen el favicon y los iconos de la PWA
+(`node scripts/generate-assets.mjs` y después `npx capacitor-assets generate`).
+Tres detalles que cuestan un rechazo o se ven feo:
+
+- El icono va sin canal alfa: la App Store rechaza los que lo tienen, y un PNG
+  rasterizado desde SVG sale con alfa aunque el fondo sea opaco.
+- Sin esquinas redondeadas: las pone cada sistema. El SVG de la marca trae un
+  `rx` que las dejaría transparentes.
+- El fondo del icono adaptativo de Android va **sin `inset`**. La herramienta lo
+  genera con 16.7% de margen, que tapa justo el área visible pero deja las
+  esquinas transparentes, y se ven en los lanzadores que mueven el icono con el
+  dedo.
+
+**Falta**: el keystore de release y los certificados de Apple. Son secretos, no
+van al repo. Cuando exista el keystore hay que cargar su SHA-1 en Firebase, o
+el login con Google falla en el build firmado.
 
 ## Fase 4 — Fichas de tienda
+
+Los textos y las respuestas de los formularios están redactados en
+`FICHAS-TIENDA.md`. Lo que sigue es el checklist de lo que hay que juntar:
 
 - Nombre, subtítulo, descripción corta y larga en castellano rioplatense.
 - **Capturas**: teléfono Android (mínimo 2) y iPhone 6.7" y 6.9" (obligatorias);
@@ -335,23 +379,31 @@ WebView necesita que el contenedor conceda el permiso del sistema. Con
 - La regla de `AGENTS.md` sigue valiendo: `npm run typecheck`, `npm run lint`,
   `npm run test:ui` y react-doctor en verde antes de cerrar cada tramo.
 
-## Orden sugerido
+## Qué falta, al 3 de septiembre de 2026
 
-1. **Fase 0** (cuentas, borrado de cuenta, privacidad, bloqueo de usuarios).
-   Es lo único que no depende de nada y bloquea todo lo demás; además sirve
-   igual para la PWA que ya está publicada.
-2. Abrir las cuentas de desarrollador en paralelo: la verificación tarda.
-3. **Fase 1 + 2** en Android primero, que se prueba en cualquier máquina.
-4. Subir a testing cerrado de Play apenas ande, para que corran los 14 días
-   mientras se sigue trabajando.
-5. **iOS** (necesita la Mac): Sign in with Apple, APNs, permisos del `Info.plist`.
-6. Fases 3 a 5 y envío.
+Todo lo que queda necesita algo que no está en el repo: una cuenta, un secreto
+o una Mac.
 
-## Lo que hay que decidir
+1. **Keystore de release de Android**, guardado fuera del repo y con respaldo.
+   Si se pierde no se puede volver a actualizar la app nunca, salvo con Play
+   App Signing activado —que conviene activar justamente por eso—. Su SHA-1 va
+   cargado en Firebase.
+2. **Cuentas de desarrollador**, si no están: la verificación de identidad
+   tarda días en las dos.
+3. **Testing cerrado de Play**: las cuentas personales nuevas necesitan 12
+   testers durante 14 días seguidos antes de poder ir a producción. Conviene
+   arrancarlo apenas haya un AAB firmado, aunque falten pulidos.
+4. **Cargar profesionales reales.** Si el revisor abre la app y ve la home en
+   gris con "sin nadie aún" en todos los rubros, la rechaza por contenido
+   incompleto. Esto ya estaba anotado en `ESTADO.md` como lo único pendiente
+   del proyecto, y ahora además bloquea la publicación.
+5. **iOS entero**: Mac o runner macOS, clave APNs, capabilities en Xcode y
+   probar Sign in with Apple, que está escrito y nunca corrió.
+6. **Que un abogado lea** la privacidad y los términos.
 
-- `appId` definitivo (no se cambia nunca más).
-- Si iOS entra ahora o después: son USD 99 al año más una Mac, y la revisión de
-  Apple es bastante más estricta que la de Google.
-- Si la web sigue siendo PWA instalable además de estar en las tiendas.
-  Recomendado que sí: es la puerta de entrada de quien no quiere instalar nada,
-  y ya funciona.
+## Decisiones ya tomadas
+
+- `appId`: **`com.jobo.app`**. No se cambia nunca más.
+- La web **sigue siendo PWA instalable** además de estar en las tiendas: es la
+  puerta de entrada de quien no quiere instalar nada, y ya funciona. `npm run
+  build` sigue generando exactamente lo de siempre; el build nativo es aparte.

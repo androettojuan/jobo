@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import { Button } from '@/components/ui/Button'
 import { loginWithApple, loginWithGoogle } from '@/features/auth/api'
 import { isIOS } from '@/lib/platform'
@@ -25,13 +27,24 @@ export function ProviderButtons({
   disabled: boolean
   onRun: (action: () => Promise<unknown>) => void
 }) {
+  // Entrar con un proveedor tarda: hay que canjear el token y leer el perfil.
+  // Sin esto los botones solo se apagaban, y una pantalla quieta durante dos
+  // segundos se lee como una app colgada, no como una que está trabajando.
+  const [tocado, setTocado] = useState<'google' | 'apple' | null>(null)
+
+  function correr(proveedor: 'google' | 'apple', action: () => Promise<unknown>) {
+    setTocado(proveedor)
+    onRun(action)
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <Button
         variant="secondary"
         size="lg"
         disabled={disabled}
-        onClick={() => onRun(loginWithGoogle)}
+        loading={disabled && tocado === 'google'}
+        onClick={() => correr('google', loginWithGoogle)}
       >
         Continuar con Google
       </Button>
@@ -41,10 +54,11 @@ export function ProviderButtons({
           variant="secondary"
           size="lg"
           disabled={disabled}
-          onClick={() => onRun(loginWithApple)}
+          loading={disabled && tocado === 'apple'}
+          onClick={() => correr('apple', loginWithApple)}
           className="bg-black text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200"
         >
-          <AppleMark />
+          {!(disabled && tocado === 'apple') && <AppleMark />}
           Continuar con Apple
         </Button>
       )}

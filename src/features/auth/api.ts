@@ -1,6 +1,7 @@
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
 import {
   createUserWithEmailAndPassword,
+  getAdditionalUserInfo,
   GoogleAuthProvider,
   OAuthProvider,
   signInWithCredential,
@@ -8,7 +9,7 @@ import {
   signInWithPopup,
   signOut,
   updateProfile,
-  type User,
+  type UserCredential,
 } from 'firebase/auth'
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
@@ -26,12 +27,29 @@ import { isNative } from '@/lib/platform'
 async function ensureProfile(
   uid: string,
   data: { displayName: string; email: string; photoURL: string | null },
+  /**
+   * Si Firebase Auth ya dijo que la cuenta es nueva. En ese caso no hace falta
+   * ir a preguntarle a Firestore si el documento existe: no puede existir. Es
+   * el único momento donde alguien está mirando la pantalla esperando, así que
+   * es el viaje de red que más conviene sacar.
+   */
+  cuentaNueva?: boolean,
 ) {
   const ref = doc(db, 'users', uid)
-  const snap = await getDoc(ref)
-  if (snap.exists()) return false
+  // Para quien vuelve sí se lee: si en algún momento se perdió el documento,
+  // este es el lugar donde se recrea.
+  if (!cuentaNueva && (await getDoc(ref)).exists()) return false
 
-  await setDoc(ref, {
+  // El `setDoc` no se espera a propósito. Firestore aplica la escritura en el
+  // cliente al instante y la sincroniza después, así que esperar el acuse del
+  // servidor solo agrega un viaje de red antes de poder mostrar algo —con el
+  // botón apagado y sin nada en pantalla—. Además el `onSnapshot` del
+  // AuthProvider ve la escritura local enseguida, así que el perfil aparece
+  // sin esperar al servidor.
+  //
+  // Si el envío fallara, el documento queda encolado mientras la app viva y
+  // `ensureProfile` lo vuelve a intentar en el próximo ingreso.
+  void setDoc(ref, {
     uid,
     displayName: data.displayName,
     email: data.email,
@@ -47,6 +65,9 @@ async function ensureProfile(
     acceptedTermsAt: serverTimestamp(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+  }).catch(() => {
+    // Sin `catch` sería un rechazo sin atender; no hay nada que hacer acá
+    // salvo no romper el ingreso, que ya está hecho.
   })
 
   return true
@@ -59,11 +80,13 @@ export async function registerWithEmail(params: {
 }) {
   const cred = await createUserWithEmailAndPassword(auth, params.email, params.password)
   await updateProfile(cred.user, { displayName: params.displayName })
-  await ensureProfile(cred.user.uid, {
-    displayName: params.displayName,
-    email: params.email,
-    photoURL: null,
-  })
+  // `createUserWithEmailAndPassword` acaba de crear la cuenta: el documento no
+  // puede existir, así que no hay nada que ir a preguntar.
+  await ensureProfile(
+    cred.user.uid,
+    { displayName: params.displayName, email: params.email, photoURL: null },
+    true,
+  )
   return cred.user
 }
 
@@ -80,12 +103,17 @@ export async function loginWithEmail(email: string, password: string) {
  * primer login, y el usuario de Firebase todavía no lo tiene. Si no se guarda
  * en ese momento, no se recupera nunca más.
  */
-async function finishProviderLogin(user: User, fallbackName?: string | null) {
-  const isNew = await ensureProfile(user.uid, {
-    displayName: user.displayName ?? fallbackName ?? 'Usuario',
-    email: user.email ?? '',
-    photoURL: user.photoURL,
-  })
+async function finishProviderLogin(cred: UserCredential, fallbackName?: string | null) {
+  const { user } = cred
+  const isNew = await ensureProfile(
+    user.uid,
+    {
+      displayName: user.displayName ?? fallbackName ?? 'Usuario',
+      email: user.email ?? '',
+      photoURL: user.photoURL,
+    },
+    getAdditionalUserInfo(cred)?.isNewUser,
+  )
   return { user, isNew }
 }
 
@@ -96,7 +124,7 @@ export async function loginWithGoogle() {
   // sesión del SDK de JavaScript, que es la que usa toda la app.
   if (!isNative) {
     const cred = await signInWithPopup(auth, new GoogleAuthProvider())
-    return finishProviderLogin(cred.user)
+    return finishProviderLogin(cred)
   }
 
   const result = await FirebaseAuthentication.signInWithGoogle()
@@ -104,7 +132,7 @@ export async function loginWithGoogle() {
   if (!idToken) throw new Error('Google no devolvió el token de identidad')
 
   const cred = await signInWithCredential(auth, GoogleAuthProvider.credential(idToken))
-  return finishProviderLogin(cred.user, result.user?.displayName)
+  return finishProviderLogin(cred, result.user?.displayName)
 }
 
 /**
@@ -120,7 +148,7 @@ export async function loginWithApple() {
   // devuelve ya generado. Sin él, Firebase rechaza la credencial.
   const credential = new OAuthProvider('apple.com').credential({ idToken, rawNonce: nonce })
   const cred = await signInWithCredential(auth, credential)
-  return finishProviderLogin(cred.user, result.user?.displayName)
+  return finishProviderLogin(cred, result.user?.displayName)
 }
 
 export async function logout() {

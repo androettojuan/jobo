@@ -17,12 +17,25 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  /**
+   * Mientras esta pantalla está resolviendo un ingreso, es ella la que decide
+   * a dónde ir. No es lo mismo que `loading`, que solo mueve el spinner del
+   * botón: esto no se apaga cuando el ingreso sale bien, porque después de
+   * navegar el guarda de abajo no tiene que volver a opinar.
+   */
+  const [ingresando, setIngresando] = useState(false)
 
-  if (!authLoading && firebaseUser) return <Navigate to={from} replace />
+  // Saca de acá a quien abra /login ya con sesión. No se mete cuando el
+  // ingreso lo está resolviendo esta misma pantalla: Firebase confirma la
+  // sesión antes de que `run()` termine, y sin `ingresando` este guarda
+  // redirige a `from` pisando el destino que `run()` iba a elegir. A quien
+  // recién crea la cuenta nunca se le llegaba a preguntar a qué vino.
+  if (!authLoading && firebaseUser && !ingresando) return <Navigate to={from} replace />
 
   async function run(action: () => Promise<unknown>) {
     setError('')
     setLoading(true)
+    setIngresando(true)
     try {
       const resultado = await action()
       // Con Google y con Apple este botón también crea la cuenta. A quien
@@ -32,6 +45,8 @@ export function LoginPage() {
       navigate(recienCreada ? '/bienvenida' : from, { replace: true })
     } catch (err) {
       setError(authErrorMessage(err))
+      // No hubo ingreso: el guarda vuelve a mandar.
+      setIngresando(false)
     } finally {
       setLoading(false)
     }

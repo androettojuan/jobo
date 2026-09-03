@@ -2,6 +2,12 @@
 
 @theme {
   /* Verde de la marca original de Jobo (#09bc8a). */
+  /*
+   * La marca tiene solo estos cinco tonos. Un `brand-950` o un `brand-200` no
+   * existen: Tailwind no genera la clase y la regla desaparece sin avisar, así
+   * que en modo oscuro queda el fondo claro con el texto claro encima. Para
+   * fondos oscuros se usa `slate` y el verde queda en el borde o el icono.
+   */
   --color-brand-50: #e8f9f3;
   --color-brand-100: #c4f0e2;
   --color-brand-500: #09bc8a;

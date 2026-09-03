@@ -48,9 +48,11 @@ export function AvailabilityToggle({
     <section
       className={cn(
         'flex flex-col gap-3 rounded-2xl border p-4',
+        // El color vive en el borde y en el icono; el fondo en oscuro es
+        // slate, como en el resto de la app.
         activo
-          ? 'border-brand-200 bg-brand-50 dark:border-brand-900 dark:bg-brand-950/30'
-          : 'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30',
+          ? 'border-brand-100 bg-brand-50 dark:border-brand-700 dark:bg-slate-900'
+          : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-slate-900',
       )}
     >
       <div className="flex items-start gap-3">

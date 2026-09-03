@@ -46,8 +46,10 @@ export function RoleChoice({ value, onChange }: { value: Role; onChange: (role: 
               onClick={() => onChange(id)}
               className={cn(
                 'flex items-start gap-3 rounded-2xl border p-3 text-left transition-colors',
+                // En oscuro el fondo va slate y el verde queda en el borde,
+                // como en el resto de la app (`RequestCard`, `InstallPrompt`).
                 activa
-                  ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30'
+                  ? 'border-brand-500 bg-brand-50 dark:bg-slate-900'
                   : 'border-slate-200 dark:border-slate-800',
               )}
             >

@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { ProfileSkeleton } from '@/components/ui/skeletons'
 import { useAuth } from '@/features/auth/useAuth'
+import { BlockButton } from '@/features/blocks/components/BlockButton'
 import { ProfessionalHeader } from '@/features/professionals/components/ProfessionalHeader'
 import { useProfessionalProfile } from '@/features/professionals/hooks/useProfessionalProfile'
 import { ReportButton } from '@/features/reports/ReportButton'
@@ -121,6 +122,16 @@ export function ProfessionalPage() {
           onReply={(reviewId, text) => void sendReply(reviewId, text)}
         />
       </section>
+
+      {!isOwner && (
+        <BlockButton
+          target={{
+            uid: professional.uid,
+            displayName: professional.displayName,
+            photoURL: professional.photoURL ?? null,
+          }}
+        />
+      )}
 
       {!isOwner && (
         <ReportButton

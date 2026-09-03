@@ -288,6 +288,24 @@ export interface Favorite {
 }
 
 /* -------------------------------------------------------------------------- */
+/* users/{uid}/blocked/{blockedUid}                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Alguien a quien bloqueaste. El id del documento es su uid.
+ *
+ * Guarda el nombre y la foto copiados para poder dibujar la lista de
+ * bloqueados sin leer un perfil por fila. Si esa persona se cambia el nombre,
+ * acá queda el que tenía: alcanza para reconocerla y desbloquearla.
+ */
+export interface Block {
+  uid: Id
+  displayName: string
+  photoURL: string | null
+  createdAt: Timestamp
+}
+
+/* -------------------------------------------------------------------------- */
 /* reports/{id}                                                               */
 /* -------------------------------------------------------------------------- */
 

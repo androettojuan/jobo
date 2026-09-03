@@ -45,11 +45,14 @@ export function TermsPage() {
         </li>
       </ul>
 
-      <h2>Denunciar</h2>
+      <h2>Denunciar y bloquear</h2>
       <p>
-        Si alguien se pasa, podés <strong>denunciarlo</strong> desde su perfil o desde la reseña.
-        Revisamos las denuncias y, si corresponde, ocultamos el contenido o suspendemos la cuenta.
-        Nos comprometemos a mirar cada denuncia dentro de las 24 horas.
+        Si alguien se pasa, podés <strong>denunciarlo</strong> desde su perfil o desde la reseña, y
+        podés <strong>bloquearlo</strong>: dejan de poder escribirse y de poder pedirse
+        presupuestos, y desaparece de tus búsquedas. Los desbloqueás cuando quieras desde{' '}
+        <Link to="/perfil">Mi perfil</Link>. Revisamos las denuncias y, si corresponde, ocultamos el
+        contenido o suspendemos la cuenta. Nos comprometemos a mirar cada denuncia dentro de las 24
+        horas.
       </p>
 
       <h2>Podemos suspender cuentas</h2>

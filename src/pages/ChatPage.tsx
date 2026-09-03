@@ -14,12 +14,14 @@ import {
 } from '@/features/chat/api'
 import { CATEGORIES_BY_ID } from '@/lib/categories'
 import { useAuth } from '@/features/auth/useAuth'
+import { useBlocked } from '@/features/blocks/useBlocked'
 import { cn } from '@/lib/utils'
 import type { Chat, Message } from '@/types/models'
 
 export function ChatPage() {
   const { chatId } = useParams<{ chatId: string }>()
   const { firebaseUser } = useAuth()
+  const blocked = useBlocked()
   const [chat, setChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   // Sin esto no se puede distinguir "todavía no llegó nada" de "chat vacío".
@@ -94,6 +96,10 @@ export function ChatPage() {
   }
 
   const otherId = chat?.participantIds.find((id) => id !== firebaseUser?.uid)
+  // El historial se sigue leyendo: bloquear corta lo que viene, no borra lo
+  // que ya se dijo. Las reglas rechazan la escritura igual, esto solo evita
+  // que alguien escriba un mensaje largo para que se lo rebote el servidor.
+  const bloqueado = Boolean(otherId && blocked.has(otherId))
   const otherName = otherId
     ? (chat?.participants[otherId]?.displayName ?? 'Conversación')
     : 'Conversación'
@@ -178,30 +184,41 @@ export function ChatPage() {
 
       {error && <p className="px-4 pb-1 text-xs text-red-600">{error}</p>}
 
-      <form
-        onSubmit={onSubmit}
-        className="safe-bottom flex gap-2 border-t border-slate-200 p-3 dark:border-slate-800"
-      >
-        <PhotoInput
-          aria-label="Enviar una foto"
-          disabled={sending}
-          onPick={(file) => void onPhoto(file)}
-          className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-slate-300 text-slate-500 dark:border-slate-700"
+      {bloqueado ? (
+        <div className="safe-bottom border-t border-slate-200 p-4 text-center text-sm text-slate-500 dark:border-slate-800">
+          Bloqueaste a esta persona. Para volver a escribirle, desbloqueala desde su perfil.
+        </div>
+      ) : (
+        <form
+          onSubmit={onSubmit}
+          className="safe-bottom flex gap-2 border-t border-slate-200 p-3 dark:border-slate-800"
         >
-          <ImagePlus className="size-5" aria-hidden />
-        </PhotoInput>
+          <PhotoInput
+            aria-label="Enviar una foto"
+            disabled={sending}
+            onPick={(file) => void onPhoto(file)}
+            className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-slate-300 text-slate-500 dark:border-slate-700"
+          >
+            <ImagePlus className="size-5" aria-hidden />
+          </PhotoInput>
 
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Escribí un mensaje…"
-          aria-label="Mensaje"
-          className="h-11 flex-1 rounded-full border border-slate-300 px-4 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
-        />
-        <Button type="submit" className="aspect-square px-0" loading={sending} aria-label="Enviar">
-          {!sending && <Send className="size-4" aria-hidden />}
-        </Button>
-      </form>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Escribí un mensaje…"
+            aria-label="Mensaje"
+            className="h-11 flex-1 rounded-full border border-slate-300 px-4 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900"
+          />
+          <Button
+            type="submit"
+            className="aspect-square px-0"
+            loading={sending}
+            aria-label="Enviar"
+          >
+            {!sending && <Send className="size-4" aria-hidden />}
+          </Button>
+        </form>
+      )}
     </div>
   )
 }

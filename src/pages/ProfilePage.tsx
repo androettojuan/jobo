@@ -8,6 +8,7 @@ import { PhotoInput } from '@/components/ui/PhotoInput'
 import { FormSkeleton } from '@/components/ui/skeletons'
 import { logout } from '@/features/auth/api'
 import { DeleteAccount } from '@/features/auth/components/DeleteAccount'
+import { BlockedList } from '@/features/blocks/components/BlockedList'
 import { updateUserProfile, uploadAvatar } from '@/features/auth/profileApi'
 import { useAuth } from '@/features/auth/useAuth'
 import { LocalitySelect } from '@/features/localities/LocalitySelect'
@@ -145,6 +146,8 @@ export function ProfilePage() {
           Guardar cambios
         </Button>
       </form>
+
+      <BlockedList />
 
       <nav className="flex flex-col divide-y divide-slate-200 dark:divide-slate-800">
         <Link

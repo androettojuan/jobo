@@ -424,3 +424,109 @@ describe('notificaciones', () => {
     )
   })
 })
+
+describe('bloqueos', () => {
+  const bloqueo = (uid: string) => ({
+    uid,
+    displayName: 'Alguien',
+    photoURL: null,
+    createdAt: new Date(),
+  })
+
+  const mensaje = (senderId: string) => ({
+    chatId: 'chat-1',
+    senderId,
+    kind: 'text',
+    text: 'Hola',
+    imageUrl: null,
+    readBy: [senderId],
+    createdAt: new Date(),
+  })
+
+  const chat = {
+    participantIds: [CLIENT, PRO],
+    participants: {},
+    requestId: 'req-1',
+    categoryId: 'plomero',
+    requestTitle: 'Pierde la canilla',
+    lastMessage: 'Hola',
+    lastMessageAt: new Date(),
+    lastMessageSenderId: CLIENT,
+    unreadCount: { [CLIENT]: 0, [PRO]: 0 },
+    requestStatus: 'accepted',
+    hiddenFor: [],
+    createdAt: new Date(),
+  }
+
+  beforeEach(async () => {
+    await seed((db) => setDoc(doc(db, 'chats/chat-1'), chat))
+  })
+
+  it('la lista de bloqueados es privada de cada uno', async () => {
+    await seed((db) => setDoc(doc(db, `users/${CLIENT}/blocked/${PRO}`), bloqueo(PRO)))
+
+    const ajeno = env.authenticatedContext(PRO).firestore()
+    await assertFails(getDoc(doc(ajeno, `users/${CLIENT}/blocked/${PRO}`)))
+
+    const propio = env.authenticatedContext(CLIENT).firestore()
+    await assertSucceeds(getDoc(doc(propio, `users/${CLIENT}/blocked/${PRO}`)))
+  })
+
+  it('nadie puede bloquear en nombre de otro', async () => {
+    const db = env.authenticatedContext(PRO).firestore()
+    await assertFails(setDoc(doc(db, `users/${CLIENT}/blocked/${STRANGER}`), bloqueo(STRANGER)))
+  })
+
+  it('sin bloqueo, los dos pueden escribir', async () => {
+    const cliente = env.authenticatedContext(CLIENT).firestore()
+    await assertSucceeds(setDoc(doc(cliente, 'chats/chat-1/messages/m-1'), mensaje(CLIENT)))
+  })
+
+  it('el bloqueado no puede escribir', async () => {
+    await seed((db) => setDoc(doc(db, `users/${CLIENT}/blocked/${PRO}`), bloqueo(PRO)))
+
+    const db = env.authenticatedContext(PRO).firestore()
+    await assertFails(setDoc(doc(db, 'chats/chat-1/messages/m-1'), mensaje(PRO)))
+  })
+
+  it('quien bloqueó tampoco puede escribir: corta para los dos lados', async () => {
+    await seed((db) => setDoc(doc(db, `users/${CLIENT}/blocked/${PRO}`), bloqueo(PRO)))
+
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertFails(setDoc(doc(db, 'chats/chat-1/messages/m-1'), mensaje(CLIENT)))
+  })
+
+  it('los mensajes viejos se siguen leyendo', async () => {
+    await seed(async (db) => {
+      await setDoc(doc(db, 'chats/chat-1/messages/m-1'), mensaje(PRO))
+      await setDoc(doc(db, `users/${CLIENT}/blocked/${PRO}`), bloqueo(PRO))
+    })
+
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertSucceeds(getDoc(doc(db, 'chats/chat-1/messages/m-1')))
+  })
+
+  it('no se le puede pedir presupuesto a quien te bloqueó', async () => {
+    await seed((db) => setDoc(doc(db, `users/${PRO}/blocked/${CLIENT}`), bloqueo(CLIENT)))
+
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertFails(setDoc(doc(db, 'requests/req-nueva'), requestDoc()))
+  })
+
+  it('tampoco se le pide presupuesto a quien bloqueaste', async () => {
+    await seed((db) => setDoc(doc(db, `users/${CLIENT}/blocked/${PRO}`), bloqueo(PRO)))
+
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertFails(setDoc(doc(db, 'requests/req-nueva'), requestDoc()))
+  })
+
+  it('desbloquear devuelve la palabra', async () => {
+    await seed((db) => setDoc(doc(db, `users/${CLIENT}/blocked/${PRO}`), bloqueo(PRO)))
+
+    const cliente = env.authenticatedContext(CLIENT).firestore()
+    await assertSucceeds(deleteDoc(doc(cliente, `users/${CLIENT}/blocked/${PRO}`)))
+
+    const pro = env.authenticatedContext(PRO).firestore()
+    await assertSucceeds(setDoc(doc(pro, 'chats/chat-1/messages/m-2'), mensaje(PRO)))
+  })
+})

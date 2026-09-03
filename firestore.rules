@@ -16,6 +16,18 @@ service cloud.firestore {
       return signedIn() && request.auth.token.admin == true;
     }
 
+    /**
+     * Si alguno de los dos bloqueó al otro.
+     *
+     * Se mira en las dos direcciones a propósito: bloquear no es solo "que no
+     * me escriba", también es "no quiero seguir hablando con esta persona".
+     * Que el que bloqueó pudiera seguir escribiendo sería absurdo.
+     */
+    function blockedBetween(a, b) {
+      return exists(/databases/$(database)/documents/users/$(a)/blocked/$(b))
+          || exists(/databases/$(database)/documents/users/$(b)/blocked/$(a));
+    }
+
     /** Campos que solo pueden cambiar desde Cloud Functions (Admin SDK). */
     function unchanged(fields) {
       return !request.resource.data.diff(resource.data).affectedKeys()
@@ -45,6 +57,12 @@ service cloud.firestore {
       }
 
       match /favorites/{professionalId} {
+        allow read, write: if isSelf(uid);
+      }
+
+      // A quién bloqueaste es asunto tuyo: nadie más lo lee ni lo toca. Las
+      // reglas sí lo consultan con `exists()`, que no pasa por acá.
+      match /blocked/{blockedUid} {
         allow read, write: if isSelf(uid);
       }
     }
@@ -93,7 +111,8 @@ service cloud.firestore {
         && request.resource.data.clientId == request.auth.uid
         && request.resource.data.status == 'pending'
         && request.resource.data.participantIds ==
-             [request.auth.uid, request.resource.data.professionalId];
+             [request.auth.uid, request.resource.data.professionalId]
+        && !blockedBetween(request.auth.uid, request.resource.data.professionalId);
       function isClient() {
         return signedIn() && request.auth.uid == resource.data.clientId;
       }
@@ -157,13 +176,26 @@ service cloud.firestore {
       allow delete: if false;
 
       match /messages/{messageId} {
-        function memberOfChat() {
-          return signedIn() && request.auth.uid in
-            get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
+        function participants() {
+          return get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
         }
 
+        function memberOfChat() {
+          return signedIn() && request.auth.uid in participants();
+        }
+
+        /** El otro de los dos. Un chat siempre tiene exactamente dos. */
+        function noBlock() {
+          let ids = participants();
+          let other = ids[0] == request.auth.uid ? ids[1] : ids[0];
+          return !blockedBetween(request.auth.uid, other);
+        }
+
+        // Leer lo ya escrito se puede igual: el historial no desaparece por
+        // bloquear a alguien, solo se corta lo que viene.
         allow read: if memberOfChat();
         allow create: if memberOfChat()
+          && noBlock()
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.kind in ['text', 'image']
           && request.resource.data.text.size() <= 2000;

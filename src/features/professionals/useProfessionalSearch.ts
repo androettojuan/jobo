@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+
+import { useBlocked } from '@/features/blocks/useBlocked'
+import type { Professional } from '@/types/models'
 
 import { filterByText, searchProfessionals } from './api'
-import type { Professional } from '@/types/models'
 
 interface Options {
   term: string
@@ -20,6 +22,7 @@ const queryKey = (categoryId?: string, localityId?: string) =>
  * por tecla. Para el volumen de un pueblo alcanza de sobra.
  */
 export function useProfessionalSearch({ term, categoryId, localityId }: Options) {
+  const blocked = useBlocked()
   const [all, setAll] = useState<Professional[]>([])
   const [error, setError] = useState('')
   /**
@@ -56,8 +59,19 @@ export function useProfessionalSearch({ term, categoryId, localityId }: Options)
     }
   }, [active, ready, key, categoryId, localityId])
 
+  // A quien bloqueaste no lo ves más en los resultados. Se filtra acá y no en
+  // la consulta porque Firestore no sabe de bloqueos, y son pocos: la lista
+  // que se trae está topeada en 100.
+  const results = useMemo(
+    () =>
+      active && ready
+        ? filterByText(all, term).filter((profesional) => !blocked.has(profesional.uid))
+        : [],
+    [active, ready, all, term, blocked],
+  )
+
   return {
-    results: active && ready ? filterByText(all, term) : [],
+    results,
     loading: active && !ready && !error,
     error: active ? error : '',
   }

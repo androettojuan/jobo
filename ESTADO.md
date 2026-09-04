@@ -1,7 +1,7 @@
 # Estado del proyecto
 
 Registro para retomar el trabajo más adelante.
-Última actualización: **2 de septiembre de 2026**.
+Última actualización: **3 de septiembre de 2026**.
 
 El código vive en GitHub: `androettojuan/jobo` (repo privado).
 
@@ -79,12 +79,12 @@ tramo de registro, perfil y contadores también contra producción:
 - Denuncias desde perfiles y reseñas.
 - Fotos en solicitudes, en el chat, en el perfil profesional y avatar, con
   compresión en el navegador antes de subir (máx. 1600px, 5 MB).
-- **56 tests** (`npm test`, con los emuladores corriendo): 36 de las reglas de
+- **110 tests** (`npm test`, con los emuladores corriendo; los 54 de pantalla
+  corren solos con `npm run test:ui`): 50 de las reglas de
   Firestore —transiciones de estado, acceso a chats y solicitudes ajenas,
   agregados que el cliente no puede tocar, reseñas, moderación y borrado del
-  historial de avisos—, 6 del filtro de búsqueda por texto y 14 de las
-  pantallas con Testing Library (solicitudes, búsqueda en la home y avisos),
-  que corren solos con `npm run test:ui` y no necesitan emuladores.
+  historial de avisos y los bloqueos entre personas—, 6 del filtro de búsqueda
+  por texto y 54 de las pantallas con Testing Library.
 - Identidad visual de la marca original (verde `#09bc8a`), iconos de la PWA,
   favicon y aviso de instalación/actualización. El logotipo y la "J" de los
   iconos son SVG vectoriales (`public/img/jobo-logo.svg` y `public/favicon.svg`):
@@ -135,28 +135,63 @@ de auth fuera del archivo del provider, y las tres pantallas más enredadas
 
 ## Rumbo a las tiendas
 
-Arrancó el trabajo para publicar Jobo en Google Play y App Store. El plan
-completo —incluidos los requisitos de política que hoy no se cumplen— está en
-`PLAN-TIENDAS.md`.
+Jobo va a Google Play y App Store envuelta con **Capacitor**. El plan completo,
+con el estado de cada tramo, está en `PLAN-TIENDAS.md`; los textos y las
+respuestas de los formularios de las tiendas, en `FICHAS-TIENDA.md`.
 
-La app web se envuelve con **Capacitor**; el `appId` es **`com.jobo.app`** y no
-se puede cambiar una vez publicada. Las carpetas `android/` e `ios/` se
-versionan. El build nativo va aparte (`npm run build:native`, con
-`VITE_TARGET=native`) porque adentro del contenedor el service worker de la PWA
-sobra y puede servir código viejo cacheado después de una actualización bajada
-de la tienda.
+El `appId` es **`com.jobo.app`** y no se cambia nunca más. `android/` e `ios/`
+se versionan. El build nativo va aparte (`npm run build:native`): adentro del
+contenedor el service worker de la PWA sobra y puede servir código viejo
+cacheado después de una actualización bajada de la tienda.
 
-Ya anda el circuito de compilación: `npm run cap:sync` y `assembleDebug` sacan
-un APK. Falta probarlo en un teléfono, y falta todo lo de la Fase 2 del plan:
-el login con Google no funciona en un WebView (`signInWithPopup` no abre nada),
-iOS exige sumar Sign in with Apple, y los push hay que rehacerlos —hoy
-`functions/src/shared.ts` manda solo `data` con bloque `webpush`, que en
-Android nativo no dibuja nada con la app cerrada y en iOS no llega.
+Probado en un Android real: arranca, la splash se va sola, el botón atrás
+navega, el login con Google anda y la bienvenida aparece. Sin probar de punta a
+punta: los push con la app cerrada, la cámara y la ubicación. Nunca corrió nada
+de iOS.
+
+### Lo que hay que saber para no volver a tropezar
+
+- **Toda pantalla fuera del `AppLayout`** —login, registro, legales— necesita su
+  propio `h-full overflow-y-auto`: `html` y `body` tienen `overflow: hidden`
+  porque el scroll lo maneja el `<main>` del layout. Y el contenedor que
+  scrollea no puede ser el mismo que centra con `justify-center`: en una
+  pantalla corta, lo que se pasa por arriba queda inalcanzable.
+- **La paleta de marca tiene cinco tonos** (50, 100, 500, 600, 700). Un
+  `brand-950` no existe: Tailwind no genera la clase y la regla desaparece sin
+  avisar, así que en oscuro queda el fondo claro con el texto claro encima. Lo
+  vigila `tests/paletaMarca.test.tsx`.
+- **`npm run deploy:hosting`**, nunca `firebase deploy --only hosting` a secas:
+  `cap:sync` deja en `dist/` el build nativo, y publicarlo rompe la PWA en
+  silencio.
+- **Dibujar de punta a punta** trajo tres cosas que no se ven en el navegador:
+  el `pb-20` fijo no alcanza para la barra de abajo (de ahí `.pb-nav`), el
+  contenido pasa por debajo de la hora al scrollear (de ahí `.status-scrim`), y
+  la barra de navegación de Android heredaba el color de los iconos del tema
+  `Light` de la aplicación.
+- **Al acelerar el ingreso** apareció una carrera vieja: `LoginPage` tiene un
+  guarda que saca de ahí a quien ya tiene sesión, y con el perfil llegando
+  rápido se disparaba antes de que `run()` eligiera destino. Por eso
+  `ingresando` es un estado aparte de `loading`.
+
+### Lo que falta, y todo depende de algo que no está en el repo
+
+1. **Desplegar la web** (`npm run deploy:hosting`). Sin eso, las tres URLs
+   legales que van en las fichas —`/privacidad`, `/terminos`,
+   `/eliminar-cuenta`— no existen en producción y un revisor ve un 404.
+2. **Keystore de release de Android**, fuera del repo y con respaldo. Si se
+   pierde no se puede volver a actualizar la app, salvo con Play App Signing.
+   Su SHA-1 va cargado en Firebase.
+3. **Testing cerrado de Play**: 12 testers, 14 días seguidos.
+4. **Cargar profesionales reales.** Si el revisor abre la app y ve la home en
+   gris con "sin nadie aún", la rechaza por contenido incompleto. Dejó de ser
+   una mejora y pasó a ser un bloqueante.
+5. **iOS entero**: Mac o runner macOS, clave APNs, capabilities en Xcode y
+   probar Sign in with Apple.
+6. **Que un abogado lea** la privacidad y los términos.
 
 ## Pendiente para el próximo tramo
 
-Nada bloqueante. Lo que sigue es cargar profesionales reales: hoy la home se
-ve en gris, con "sin nadie aún" en casi todos los rubros.
+El orden de lo que sigue está en `proximas-tareas.md`.
 
 > Al desplegar Cloud Functions por primera vez en un proyecto, las de 2ª
 > generación fallan con un error de permisos de Eventarc. No es un problema del
@@ -189,10 +224,14 @@ comprobá que el cambio esté en el código compilado, no solo en el fuente.
 ### Cómo desplegar
 
 ```bash
-npm run build && firebase deploy --only hosting
+npm run deploy:hosting     # recompila la web y publica
 firebase deploy --only firestore:rules,firestore:indexes,storage
 firebase deploy --only functions
 ```
+
+**Nunca `firebase deploy --only hosting` a secas.** `npm run cap:sync` deja en
+`dist/` el build nativo, que va sin service worker ni manifiesto: publicarlo
+deja la PWA sin poder instalarse ni recibir avisos, y no falla ni avisa.
 
 Cuidado con los scripts de `scripts/`: sin `FIRESTORE_EMULATOR_HOST` y
 `FIREBASE_AUTH_EMULATOR_HOST` apuntan a **producción**, no al emulador.

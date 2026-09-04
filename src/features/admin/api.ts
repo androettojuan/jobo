@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -59,6 +60,18 @@ export async function getReportedReview(reviewId: string) {
  */
 export function setReviewHidden(reviewId: string, hidden: boolean) {
   return updateDoc(doc(db, 'reviews', reviewId), { hidden })
+}
+
+/* --- Mensajes ------------------------------------------------------------- */
+
+/**
+ * Borra un mensaje denunciado.
+ *
+ * El admin puede borrarlo sin poder leer la conversación: lo que ve es la
+ * copia que guardó la denuncia, no el chat. Borrar no es leer.
+ */
+export function deleteReportedMessage(chatId: string, messageId: string) {
+  return deleteDoc(doc(db, 'chats', chatId, 'messages', messageId))
 }
 
 /* --- Usuarios ------------------------------------------------------------ */

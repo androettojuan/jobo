@@ -114,6 +114,24 @@ export const onReportCreated = onDocumentCreated('reports/{reportId}', async (ev
   })
   if (!report) return
 
+  // Copia del mensaje denunciado, para que el admin pueda verlo sin que se le
+  // abra la conversación entera. La escribe esta función leyendo el mensaje
+  // real: si la mandara el cliente, cualquiera podría inventar la prueba con
+  // la que acusa a otro.
+  if (report.targetType === 'message' && report.chatId) {
+    const mensaje = await db.doc(`chats/${report.chatId}/messages/${report.targetId}`).get()
+    await event.data?.ref.update({
+      reportedMessage: mensaje.exists
+        ? {
+            text: mensaje.get('text') ?? '',
+            imageUrl: mensaje.get('imageUrl') ?? null,
+            senderId: mensaje.get('senderId') ?? '',
+          }
+        : null,
+    })
+    if (!mensaje.exists) logger.warn(`Denuncia ${reportId}: el mensaje ya no está`)
+  }
+
   const objeto = OBJETOS[report.targetType] ?? 'algo'
   const motivo = MOTIVOS[report.reason] ?? 'Otro motivo'
 

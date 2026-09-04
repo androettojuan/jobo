@@ -12,15 +12,23 @@ export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: 'other', label: 'Otro motivo' },
 ]
 
-export async function createReport(params: {
+export async function createReport({
+  chatId,
+  ...params
+}: {
   reporterId: string
   targetType: ReportTargetType
   targetId: string
+  /** Obligatorio al denunciar un mensaje: es lo que permite encontrarlo. */
+  chatId?: string
   reason: ReportReason
   details: string
 }) {
   await addDoc(collection(db, 'reports'), {
     ...params,
+    // Firestore rechaza `undefined`, y las denuncias que no son de un mensaje
+    // no llevan chat: se manda el campo solo cuando existe.
+    ...(chatId ? { chatId } : {}),
     details: params.details.trim(),
     status: 'open',
     resolution: null,

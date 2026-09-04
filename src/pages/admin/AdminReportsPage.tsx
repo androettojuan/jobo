@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { RowsSkeleton } from '@/components/ui/skeletons'
 import { listReports, resolveReport, setUserDisabled } from '@/features/admin/api'
+import { ReportedMessage } from '@/features/admin/components/ReportedMessage'
 import { ReportedReview } from '@/features/admin/components/ReportedReview'
 import { useAuth } from '@/features/auth/useAuth'
 import { cn } from '@/lib/utils'
@@ -109,6 +110,8 @@ export function AdminReportsPage() {
               )}
 
               {report.targetType === 'review' && <ReportedReview reviewId={report.targetId} />}
+
+              {report.targetType === 'message' && <ReportedMessage report={report} />}
 
               {report.status === 'open' && (
                 <>

@@ -202,7 +202,9 @@ service cloud.firestore {
         // Solo se puede editar para marcar leído.
         allow update: if memberOfChat()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']);
-        allow delete: if false;
+        // El admin borra un mensaje denunciado. Borrar no es leer: sigue sin
+        // poder abrir la conversación, solo ve la copia que la denuncia guardó.
+        allow delete: if isAdmin();
       }
     }
 
@@ -242,7 +244,11 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.reporterId == request.auth.uid
         && request.resource.data.status == 'open'
-        && request.resource.data.targetType in ['user', 'professional', 'review', 'message'];
+        && request.resource.data.targetType in ['user', 'professional', 'review', 'message']
+        // La copia del mensaje la escribe una Cloud Function leyendo el
+        // mensaje real. Si la pusiera el cliente, cualquiera podría inventar
+        // la prueba con la que acusa a otro.
+        && !('reportedMessage' in request.resource.data);
       allow update, delete: if isAdmin();
     }
   }

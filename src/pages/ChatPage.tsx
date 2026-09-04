@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
 import { PhotoInput } from '@/components/ui/PhotoInput'
+import { MessageReport } from '@/features/chat/components/MessageReport'
 import { MessagesSkeleton } from '@/components/ui/skeletons'
 import {
   markChatRead,
@@ -151,9 +152,15 @@ export function ChatPage() {
             )
           }
 
+          // Solo se denuncia lo ajeno: lo propio se borra o se corrige hablando.
+          const denunciable = !mine && chatId
+
           if (message.kind === 'image' && message.imageUrl) {
             return (
-              <li key={message.id} className={cn('max-w-[70%]', mine ? 'self-end' : 'self-start')}>
+              <li
+                key={message.id}
+                className={cn('flex max-w-[70%] flex-col gap-1', mine ? 'self-end' : 'self-start')}
+              >
                 <a href={message.imageUrl} target="_blank" rel="noreferrer">
                   <img
                     src={message.imageUrl}
@@ -161,6 +168,7 @@ export function ChatPage() {
                     className="rounded-2xl object-cover"
                   />
                 </a>
+                {denunciable && <MessageReport chatId={chatId} messageId={message.id} />}
               </li>
             )
           }
@@ -168,14 +176,17 @@ export function ChatPage() {
           return (
             <li
               key={message.id}
-              className={cn(
-                'max-w-[80%] rounded-2xl px-3 py-2 text-sm',
-                mine
-                  ? 'self-end bg-brand-600 text-white'
-                  : 'self-start bg-slate-100 dark:bg-slate-800',
-              )}
+              className={cn('flex max-w-[80%] flex-col gap-1', mine ? 'self-end' : 'self-start')}
             >
-              {message.text}
+              <span
+                className={cn(
+                  'rounded-2xl px-3 py-2 text-sm',
+                  mine ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800',
+                )}
+              >
+                {message.text}
+              </span>
+              {denunciable && <MessageReport chatId={chatId} messageId={message.id} />}
             </li>
           )
         })}

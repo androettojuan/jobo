@@ -322,6 +322,15 @@ export interface Report {
   targetType: ReportTargetType
   /** uid, reviewId o messageId según `targetType`. */
   targetId: Id
+  /** Solo para `message`: sin el chat no se puede ubicar un mensaje. */
+  chatId?: Id
+  /**
+   * Copia del mensaje denunciado, para que el admin pueda ver **eso y nada
+   * más**: no tiene acceso a la conversación. La escribe una Cloud Function
+   * leyendo el mensaje de verdad, no el cliente, porque si no cualquiera
+   * podría inventar la prueba con la que acusa a otro.
+   */
+  reportedMessage?: { text: string; imageUrl: string | null; senderId: Id } | null
   reason: ReportReason
   details: string
   status: ReportStatus

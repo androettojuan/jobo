@@ -11,11 +11,18 @@ import { createReport, REPORT_REASONS } from './api'
 interface ReportButtonProps {
   targetType: ReportTargetType
   targetId: string
+  /** Obligatorio al denunciar un mensaje: sin el chat no se lo puede ubicar. */
+  chatId?: string
   label?: string
 }
 
 /** Botón de denuncia con su formulario desplegable. */
-export function ReportButton({ targetType, targetId, label = 'Denunciar' }: ReportButtonProps) {
+export function ReportButton({
+  targetType,
+  targetId,
+  chatId,
+  label = 'Denunciar',
+}: ReportButtonProps) {
   const { firebaseUser } = useAuth()
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState<ReportReason>('fraud')
@@ -38,6 +45,7 @@ export function ReportButton({ targetType, targetId, label = 'Denunciar' }: Repo
         reporterId: firebaseUser.uid,
         targetType,
         targetId,
+        chatId,
         reason,
         details,
       })

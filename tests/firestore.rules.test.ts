@@ -234,6 +234,41 @@ describe('chats', () => {
     await assertFails(getDoc(doc(db, 'chats/chat-1')))
   })
 
+  it('el admin borra un mensaje denunciado, sin poder leer el chat', async () => {
+    await seed((db) =>
+      setDoc(doc(db, 'chats/chat-1/messages/m-1'), {
+        chatId: 'chat-1',
+        senderId: CLIENT,
+        kind: 'text',
+        text: 'Un insulto',
+        imageUrl: null,
+        readBy: [CLIENT],
+        createdAt: new Date(),
+      }),
+    )
+    const db = env.authenticatedContext(STRANGER, { admin: true }).firestore()
+
+    // Ve el mensaje por la copia que guarda la denuncia, no abriendo el chat.
+    await assertFails(getDoc(doc(db, 'chats/chat-1/messages/m-1')))
+    await assertSucceeds(deleteDoc(doc(db, 'chats/chat-1/messages/m-1')))
+  })
+
+  it('un participante no puede borrar mensajes', async () => {
+    await seed((db) =>
+      setDoc(doc(db, 'chats/chat-1/messages/m-1'), {
+        chatId: 'chat-1',
+        senderId: CLIENT,
+        kind: 'text',
+        text: 'Hola',
+        imageUrl: null,
+        readBy: [CLIENT],
+        createdAt: new Date(),
+      }),
+    )
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertFails(deleteDoc(doc(db, 'chats/chat-1/messages/m-1')))
+  })
+
   it('un tercero no puede escribir mensajes', async () => {
     const db = env.authenticatedContext(STRANGER).firestore()
     await assertFails(
@@ -563,5 +598,48 @@ describe('bloqueos', () => {
 
     const pro = env.authenticatedContext(PRO).firestore()
     await assertSucceeds(setDoc(doc(pro, 'chats/chat-1/messages/m-2'), mensaje(PRO)))
+  })
+})
+
+describe('denuncias', () => {
+  const denuncia = {
+    reporterId: CLIENT,
+    targetType: 'message',
+    targetId: 'm-1',
+    chatId: 'chat-1',
+    reason: 'abuse',
+    details: 'Me insultó',
+    status: 'open',
+    resolution: null,
+    resolvedBy: null,
+    resolvedAt: null,
+    createdAt: new Date(),
+  }
+
+  it('se puede denunciar un mensaje', async () => {
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertSucceeds(setDoc(doc(db, 'reports/den-1'), denuncia))
+  })
+
+  it('quien denuncia no puede escribir la copia del mensaje', async () => {
+    // Si pudiera, cualquiera inventaría la prueba con la que acusa a otro. La
+    // copia la escribe una Cloud Function leyendo el mensaje real.
+    const db = env.authenticatedContext(CLIENT).firestore()
+    await assertFails(
+      setDoc(doc(db, 'reports/den-2'), {
+        ...denuncia,
+        reportedMessage: { text: 'algo que nunca dijo', imageUrl: null, senderId: PRO },
+      }),
+    )
+  })
+
+  it('nadie ve las denuncias ajenas', async () => {
+    await seed((db) => setDoc(doc(db, 'reports/den-3'), denuncia))
+
+    const ajeno = env.authenticatedContext(PRO).firestore()
+    await assertFails(getDoc(doc(ajeno, 'reports/den-3')))
+
+    const admin = env.authenticatedContext(STRANGER, { admin: true }).firestore()
+    await assertSucceeds(getDoc(doc(admin, 'reports/den-3')))
   })
 })

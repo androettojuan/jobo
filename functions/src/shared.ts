@@ -23,6 +23,7 @@ export type NotificationType =
   | 'request_cancelled'
   | 'message_received'
   | 'review_received'
+  | 'report_received'
 
 interface NotifyParams {
   uid: string

@@ -99,8 +99,6 @@ Anda, pero nadie lo ejercitó completo en un teléfono:
 
 ## Mejoras que quedaron anotadas, sin urgencia
 
-- Aviso por email al admin cuando entra una denuncia. Los términos prometen
-  mirarlas dentro de las 24 horas y hoy solo queda una línea en los logs.
 - Un modo vacaciones con fecha de vuelta, como el de Mercado Libre. Hoy el
   interruptor es manual en las dos direcciones.
 - Sincronizar nombre y foto dentro de los chats ya abiertos.

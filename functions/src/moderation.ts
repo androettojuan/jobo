@@ -2,7 +2,49 @@ import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/fire
 import { logger } from 'firebase-functions'
 import { getAuth } from 'firebase-admin/auth'
 
-import { db } from './shared.js'
+import { db, notify } from './shared.js'
+
+/** Los mismos motivos que ofrece la pantalla de denuncia, en texto. */
+const MOTIVOS: Record<string, string> = {
+  fraud: 'Me quiso estafar',
+  abuse: 'Me trató mal',
+  fake_profile: 'El perfil es falso',
+  no_show: 'No se presentó',
+  spam: 'Manda spam',
+  other: 'Otro motivo',
+}
+
+const OBJETOS: Record<string, string> = {
+  user: 'una persona',
+  professional: 'un perfil profesional',
+  review: 'una reseña',
+  message: 'un mensaje',
+}
+
+/**
+ * Los uid con el custom claim de admin.
+ *
+ * Se recorre Auth porque el rol vive en el token y no en Firestore —esa fue la
+ * decisión, para que nadie pueda dárselo a sí mismo editando su documento—, y
+ * un custom claim no se puede consultar. No se cachea a propósito: las
+ * denuncias son pocas, y una lista vieja significa que un admin nuevo no se
+ * entera de nada. Si algún día llegan seguido, esto hay que resolverlo de otra
+ * forma.
+ */
+async function adminUids() {
+  const admins: string[] = []
+  let pageToken: string | undefined
+
+  do {
+    const page = await getAuth().listUsers(1000, pageToken)
+    for (const user of page.users) {
+      if (user.customClaims?.admin === true) admins.push(user.uid)
+    }
+    pageToken = page.pageToken
+  } while (pageToken)
+
+  return admins
+}
 
 /**
  * Cuando un admin aprueba una categoría propuesta, la volvemos visible.
@@ -51,14 +93,50 @@ export const onUserDisabledChanged = onDocumentUpdated('users/{uid}', async (eve
   }
 })
 
-/** Aviso al admin de que hay una denuncia nueva (queda en los logs y en el panel). */
+/**
+ * Le avisa al admin que entró una denuncia.
+ *
+ * Los términos prometen mirar cada denuncia dentro de las 24 horas, y la guía
+ * 1.2 de la App Store pide demostrar que se actúa sobre ellas. Con el aviso
+ * solo en los logs, eso dependía de que alguien se acordara de mirar el panel.
+ *
+ * Va por el mismo camino que el resto de los avisos: entrada en el historial y
+ * push al teléfono, sin sumar ningún servicio de correo.
+ */
 export const onReportCreated = onDocumentCreated('reports/{reportId}', async (event) => {
   const report = event.data?.data()
+  const reportId = event.params.reportId
+
   logger.info('Denuncia nueva', {
-    reportId: event.params.reportId,
+    reportId,
     targetType: report?.targetType,
     reason: report?.reason,
   })
+  if (!report) return
+
+  const objeto = OBJETOS[report.targetType] ?? 'algo'
+  const motivo = MOTIVOS[report.reason] ?? 'Otro motivo'
+
+  const admins = await adminUids()
+  if (admins.length === 0) {
+    // Que no haya a quién avisarle es un problema de configuración, no del
+    // código: sin esto en los logs, las denuncias se acumulan en silencio.
+    logger.warn(`Denuncia ${reportId} sin admin a quien avisar`)
+    return
+  }
+
+  for (const uid of admins) {
+    // Si el admin es quien denunció, ya lo sabe.
+    if (uid === report.reporterId) continue
+
+    await notify({
+      uid,
+      type: 'report_received',
+      title: `Denunciaron ${objeto}`,
+      body: `${motivo}. ${report.details ? `"${report.details}"` : 'Sin más detalle.'}`.trim(),
+      link: '/admin',
+    })
+  }
 })
 
 /**

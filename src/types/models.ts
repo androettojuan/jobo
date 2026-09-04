@@ -263,6 +263,7 @@ export type NotificationType =
   | 'request_cancelled'
   | 'message_received'
   | 'review_received'
+  | 'report_received'
 
 export interface AppNotification {
   id: Id

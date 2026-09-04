@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -11,7 +12,7 @@ import {
 } from 'firebase/firestore'
 
 import { db } from '@/lib/firebase'
-import type { Category, Professional, Report, ReportStatus, User } from '@/types/models'
+import type { Category, Professional, Report, ReportStatus, Review, User } from '@/types/models'
 
 /* --- Denuncias ----------------------------------------------------------- */
 
@@ -39,6 +40,25 @@ export function resolveReport(
     resolvedBy: adminId,
     resolvedAt: serverTimestamp(),
   })
+}
+
+/* --- Reseñas -------------------------------------------------------------- */
+
+/** La reseña denunciada, para poder leerla antes de decidir. */
+export async function getReportedReview(reviewId: string) {
+  const snap = await getDoc(doc(db, 'reviews', reviewId))
+  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Review) : null
+}
+
+/**
+ * Saca una reseña de la vista pública, o la devuelve.
+ *
+ * No se borra: `hidden` la quita de la ficha del profesional y del cálculo del
+ * promedio, pero deja la constancia de que existió. Si la denuncia era
+ * infundada se vuelve a mostrar, y eso con un borrado no se puede.
+ */
+export function setReviewHidden(reviewId: string, hidden: boolean) {
+  return updateDoc(doc(db, 'reviews', reviewId), { hidden })
 }
 
 /* --- Usuarios ------------------------------------------------------------ */

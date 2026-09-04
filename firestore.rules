@@ -219,12 +219,18 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/requests/$(requestId)).data.clientId == request.auth.uid
         && get(/databases/$(database)/documents/requests/$(requestId)).data.status == 'completed';
 
-      // El autor edita su reseña; el profesional solo puede responderla.
+      // El autor edita su reseña; el profesional solo puede responderla; y el
+      // admin solo puede ocultarla. `hidden` la saca de la ficha pública y del
+      // promedio, sin borrar la constancia de que existió: si la denuncia era
+      // infundada, se vuelve a mostrar. Ni el autor ni el profesional pueden
+      // tocarlo, o cualquiera se sacaría de encima una mala calificación.
       allow update: if signedIn() && (
         (request.auth.uid == resource.data.authorId
           && unchanged(['professionalId', 'authorId', 'requestId', 'reply', 'hidden']))
         || (request.auth.uid == resource.data.professionalId
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reply']))
+        || (isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden']))
       );
       allow delete: if isAdmin() || (signedIn() && request.auth.uid == resource.data.authorId);
     }

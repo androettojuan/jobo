@@ -172,6 +172,41 @@ describe('reseñas', () => {
     )
     await assertFails(updateDoc(doc(db, 'reviews/req-1'), { rating: 1 }))
   })
+
+  describe('ocultar una reseña denunciada', () => {
+    beforeEach(async () => {
+      await seed(async (db) => {
+        await setDoc(doc(db, 'requests/req-1'), requestDoc({ status: 'completed' }))
+        await setDoc(doc(db, 'reviews/req-1'), review)
+      })
+    })
+
+    const comoAdmin = () => env.authenticatedContext(STRANGER, { admin: true }).firestore()
+
+    it('el admin la oculta y la vuelve a mostrar', async () => {
+      const db = comoAdmin()
+      await assertSucceeds(updateDoc(doc(db, 'reviews/req-1'), { hidden: true }))
+      await assertSucceeds(updateDoc(doc(db, 'reviews/req-1'), { hidden: false }))
+    })
+
+    it('el admin solo puede tocar eso: no reescribe la reseña', async () => {
+      const db = comoAdmin()
+      await assertFails(updateDoc(doc(db, 'reviews/req-1'), { comment: 'otra cosa' }))
+      await assertFails(updateDoc(doc(db, 'reviews/req-1'), { hidden: true, rating: 1 }))
+    })
+
+    it('el profesional no puede ocultar una mala calificación', async () => {
+      // Si pudiera, cualquiera se sacaría de encima las reseñas que no le
+      // gustan y el promedio no significaría nada.
+      const db = env.authenticatedContext(PRO).firestore()
+      await assertFails(updateDoc(doc(db, 'reviews/req-1'), { hidden: true }))
+    })
+
+    it('el autor tampoco', async () => {
+      const db = env.authenticatedContext(CLIENT).firestore()
+      await assertFails(updateDoc(doc(db, 'reviews/req-1'), { hidden: true }))
+    })
+  })
 })
 
 describe('chats', () => {
